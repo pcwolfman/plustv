@@ -210,11 +210,24 @@ function renderChannels() {
 
 // Kanal Oynat
 function playChannel(channel) {
+    if (!channel || !channel.url) {
+        showError('Geçersiz kanal bilgisi.');
+        return;
+    }
+    
     currentChannel = channel;
     
-    // Önceki oynatıcıyı durdur
+    // Önceki oynatıcıyı durdur ve temizle
     videoPlayer.pause();
     videoPlayer.src = '';
+    videoPlayer.load(); // Player'ı sıfırla
+    
+    // Önceki HLS instance'ını temizle
+    if (videoPlayer.hls) {
+        videoPlayer.hls.destroy();
+        videoPlayer.hls = null;
+    }
+    
     iframePlayer.src = '';
     iframePlayer.style.display = 'none';
     
@@ -240,53 +253,160 @@ function playChannel(channel) {
         playM3U8(channel.url);
     } else if (channel.type === 'iframe') {
         playIframe(channel.url);
-    }
-    
-    // Placeholder'ı gizle
-    setTimeout(() => {
-        videoPlaceholder.style.display = 'none';
+    } else {
         loading.style.display = 'none';
-    }, 1000);
+        showError('Desteklenmeyen kanal tipi.');
+    }
 }
 
 // M3U8 Oynat
 function playM3U8(url) {
     videoPlayer.style.display = 'block';
     iframePlayer.style.display = 'none';
+    videoPlaceholder.style.display = 'none';
+    
+    // HLS.js yüklenmesini bekle
+    if (typeof Hls === 'undefined') {
+        // HLS.js henüz yüklenmedi, bekle
+        let attempts = 0;
+        const maxAttempts = 100; // 10 saniye (100ms * 100)
+        
+        const checkHls = setInterval(() => {
+            attempts++;
+            if (typeof Hls !== 'undefined') {
+                clearInterval(checkHls);
+                playM3U8(url); // Tekrar dene
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkHls);
+                loading.style.display = 'none';
+                showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
+                videoPlaceholder.style.display = 'flex';
+            }
+        }, 100);
+        return;
+    }
     
     // HLS.js kullanarak M3U8 oynat
     if (Hls.isSupported()) {
+        // Önceki HLS instance'ını temizle
+        if (videoPlayer.hls) {
+            videoPlayer.hls.destroy();
+        }
+        
         const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: true,
+            debug: false,
+            xhrSetup: function(xhr, url) {
+                xhr.withCredentials = false;
+            }
         });
+        
+        videoPlayer.hls = hls;
         
         hls.loadSource(url);
         hls.attachMedia(videoPlayer);
         
+        let manifestParsed = false;
+        let timeout;
+        
+        const clearTimeoutSafe = () => {
+            if (timeout) {
+                clearTimeout(timeout);
+                timeout = null;
+            }
+        };
+        
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            manifestParsed = true;
+            clearTimeoutSafe();
             videoPlayer.play().catch(err => {
                 console.error('Oynatma hatası:', err);
                 loading.style.display = 'none';
+                showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
+                videoPlaceholder.style.display = 'flex';
             });
             loading.style.display = 'none';
         });
         
         hls.on(Hls.Events.ERROR, (event, data) => {
+            console.error('HLS Hatası:', data);
             if (data.fatal) {
-                loading.style.display = 'none';
-                showError('Kanal yüklenemedi. Lütfen başka bir kanal deneyin.');
+                switch(data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.error('Ağ hatası, yeniden deneniyor...');
+                        try {
+                            hls.startLoad();
+                        } catch(e) {
+                            console.error('Yeniden yükleme hatası:', e);
+                            loading.style.display = 'none';
+                            hls.destroy();
+                            showError('Ağ hatası. İnternet bağlantınızı kontrol edin.');
+                            videoPlaceholder.style.display = 'flex';
+                        }
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.error('Medya hatası, düzeltiliyor...');
+                        try {
+                            hls.recoverMediaError();
+                        } catch(e) {
+                            console.error('Medya hatası düzeltilemedi:', e);
+                            loading.style.display = 'none';
+                            hls.destroy();
+                            showError('Video çözümlenemedi. Lütfen başka bir kanal deneyin.');
+                            videoPlaceholder.style.display = 'flex';
+                        }
+                        break;
+                    default:
+                        clearTimeoutSafe();
+                        loading.style.display = 'none';
+                        hls.destroy();
+                        showError('Kanal yüklenemedi. Lütfen başka bir kanal deneyin.');
+                        videoPlaceholder.style.display = 'flex';
+                        break;
+                }
             }
         });
+        
+        // Timeout ekle - manifest 15 saniye içinde yüklenmezse hata ver
+        timeout = setTimeout(() => {
+            if (!manifestParsed) {
+                loading.style.display = 'none';
+                hls.destroy();
+                showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
+                videoPlaceholder.style.display = 'flex';
+            }
+        }, 15000);
         
     } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
         // Safari için native HLS desteği
         videoPlayer.src = url;
-        videoPlayer.play().catch(err => {
-            console.error('Oynatma hatası:', err);
+        const playPromise = videoPlayer.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                loading.style.display = 'none';
+            }).catch(err => {
+                console.error('Oynatma hatası:', err);
+                loading.style.display = 'none';
+                showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
+            });
+        } else {
             loading.style.display = 'none';
-        });
-        loading.style.display = 'none';
+        }
+        
+        // Timeout ekle - Safari için
+        const safariTimeout = setTimeout(() => {
+            if (videoPlayer.readyState === 0) {
+                loading.style.display = 'none';
+                showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
+                videoPlaceholder.style.display = 'flex';
+            }
+        }, 15000);
+        
+        videoPlayer.addEventListener('loadeddata', () => {
+            clearTimeout(safariTimeout);
+        }, { once: true });
     } else {
         loading.style.display = 'none';
         showError('Tarayıcınız bu video formatını desteklemiyor.');
@@ -302,9 +422,39 @@ function playIframe(url) {
 }
 
 // Video Hatası
-function handleVideoError() {
+function handleVideoError(e) {
     loading.style.display = 'none';
-    showError('Video yüklenemedi. Lütfen başka bir kanal deneyin.');
+    console.error('Video hatası:', e);
+    
+    // HLS instance'ını temizle
+    if (videoPlayer.hls) {
+        videoPlayer.hls.destroy();
+        videoPlayer.hls = null;
+    }
+    
+    let errorMessage = 'Video yüklenemedi.';
+    
+    if (videoPlayer.error) {
+        switch(videoPlayer.error.code) {
+            case videoPlayer.error.MEDIA_ERR_ABORTED:
+                errorMessage = 'Video yükleme iptal edildi.';
+                break;
+            case videoPlayer.error.MEDIA_ERR_NETWORK:
+                errorMessage = 'Ağ hatası. İnternet bağlantınızı kontrol edin.';
+                break;
+            case videoPlayer.error.MEDIA_ERR_DECODE:
+                errorMessage = 'Video çözümlenemedi.';
+                break;
+            case videoPlayer.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                errorMessage = 'Video formatı desteklenmiyor.';
+                break;
+        }
+    }
+    
+    showError(errorMessage + ' Lütfen başka bir kanal deneyin.');
+    
+    // Placeholder'ı göster
+    videoPlaceholder.style.display = 'flex';
 }
 
 // Hata Göster
@@ -379,10 +529,20 @@ function toggleVolume() {
     volumeIcon.textContent = isMuted ? '🔇' : '🔊';
 }
 
-// HLS.js Script Yükle (M3U8 desteği için)
-const hlsScript = document.createElement('script');
-hlsScript.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
-document.head.appendChild(hlsScript);
+// HLS.js Script Yükle (M3U8 desteği için) - Eğer head'de yüklenmemişse
+if (typeof Hls === 'undefined') {
+    const hlsScript = document.createElement('script');
+    hlsScript.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+    hlsScript.onerror = () => {
+        console.error('HLS.js yüklenemedi. Kanal oynatma çalışmayabilir.');
+    };
+    hlsScript.onload = () => {
+        console.log('HLS.js başarıyla yüklendi.');
+    };
+    document.head.appendChild(hlsScript);
+} else {
+    console.log('HLS.js zaten yüklü.');
+}
 
 // Klavye Kısayolları
 document.addEventListener('keydown', (e) => {

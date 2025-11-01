@@ -12,79 +12,118 @@
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1 class="logo">📺 PlusTV</h1>
-            <p class="tagline">Canlı TV İzleme Platformu</p>
-        </header>
-
         <div class="main-content">
             <aside class="sidebar">
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="🔍 Kanal ara...">
                 </div>
                 
-                <div class="categories">
+                <div class="categories-menu">
                     <h3>Kategoriler</h3>
-                    <button class="category-btn active" data-category="all">Tümü</button>
-                    <button class="category-btn" data-category="news">Haber</button>
-                    <button class="category-btn" data-category="sports">Spor</button>
-                    <button class="category-btn" data-category="entertainment">Eğlence</button>
-                    <button class="category-btn" data-category="movie">Sinema</button>
-                    <button class="category-btn" data-category="music">Müzik</button>
-                </div>
-
-                <div class="channel-list" id="channelList">
-                    <!-- Kanallar JavaScript ile eklenecek -->
+                    <div class="category-accordion" data-category="all">
+                        <button class="category-header">
+                            <div class="category-icon">📺</div>
+                            <div class="category-info">
+                                <div class="category-name">Tümü</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="favorites">
+                        <button class="category-header">
+                            <div class="category-icon">⭐</div>
+                            <div class="category-info">
+                                <div class="category-name">Favori Kanallar</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="recent">
+                        <button class="category-header">
+                            <div class="category-icon">🕐</div>
+                            <div class="category-info">
+                                <div class="category-name">Son İzlenen</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="news">
+                        <button class="category-header">
+                            <div class="category-icon">📰</div>
+                            <div class="category-info">
+                                <div class="category-name">Haber</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="sports">
+                        <button class="category-header">
+                            <div class="category-icon">⚽</div>
+                            <div class="category-info">
+                                <div class="category-name">Spor</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="entertainment">
+                        <button class="category-header">
+                            <div class="category-icon">🎭</div>
+                            <div class="category-info">
+                                <div class="category-name">Eğlence</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="movie">
+                        <button class="category-header">
+                            <div class="category-icon">🎬</div>
+                            <div class="category-info">
+                                <div class="category-name">Sinema</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="category-accordion" data-category="music">
+                        <button class="category-header">
+                            <div class="category-icon">🎵</div>
+                            <div class="category-info">
+                                <div class="category-name">Müzik</div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
             <main class="player-section">
-                <div class="video-container" id="videoContainer">
-                    <div class="video-placeholder">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">📺</div>
-                            <h2>Bir Kanal Seçin</h2>
-                            <p>Sol taraftaki listeden izlemek istediğiniz kanalı seçin</p>
-                            <div class="info-box">
-                                <p><strong>💡 İpucu:</strong> Tam ekran için videoya çift tıklayın</p>
+                <div class="channels-panel" id="channelsPanel">
+                    <div class="channels-header">
+                        <h3 id="activeCategoryName">Tüm Kanallar</h3>
+                    </div>
+                    <div class="channels-list" id="channelsList">
+                        <!-- Kanallar buraya eklenecek -->
+                    </div>
+                </div>
+                <div class="video-wrapper">
+                    <div class="video-container" id="videoContainer">
+                        <div class="video-placeholder">
+                            <div class="placeholder-content">
+                                <h1 class="placeholder-title">Plus TV</h1>
+                                <div class="placeholder-icon">📺</div>
+                                <h2>Bir Kanal Seçin</h2>
+                                <p>Sol taraftaki kategoriden bir kategori seçin, ortadaki listeden kanal seçin</p>
+                                <div class="contact-info">
+                                    <p>İletişim : Telegram : <a href="https://t.me/carautoplus" target="_blank">t.me/carautoplus</a></p>
+                                </div>
                             </div>
                         </div>
+                        <div class="loading-overlay" id="loading">
+                            <div class="spinner"></div>
+                            <p>Yükleniyor...</p>
+                        </div>
+                        <video id="videoPlayer" class="video-player" controls autoplay playsinline>
+                            Tarayıcınız video oynatmayı desteklemiyor.
+                        </video>
+                        <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
                     </div>
-                    <video id="videoPlayer" class="video-player" controls autoplay muted playsinline>
-                        Tarayıcınız video oynatmayı desteklemiyor.
-                    </video>
-                    <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
-                </div>
-                
-                <div class="current-channel-info" id="currentChannelInfo" style="display: none;">
-                    <h3 id="currentChannelName"></h3>
-                    <p id="currentChannelCategory"></p>
-                </div>
-
-                <div class="controls">
-                    <button class="control-btn" id="fullscreenBtn" title="Tam Ekran">
-                        <span>⛶</span> Tam Ekran
-                    </button>
-                    <button class="control-btn" id="volumeBtn" title="Ses Aç/Kapat">
-                        <span id="volumeIcon">🔊</span> Ses
-                    </button>
-                    <button class="control-btn" id="qualityBtn" title="Kalite" style="display: none;">
-                        <span>⚙️</span> Kalite
-                    </button>
                 </div>
             </main>
         </div>
 
-        <footer class="footer">
-            <p>© 2024 PlusTV - Tüm hakları saklıdır</p>
-            <p class="note">Not: Kanalların erişilebilirliği internet bağlantınıza ve yayın kaynağına bağlıdır.</p>
-        </footer>
     </div>
 
-    <div class="loading" id="loading" style="display: none;">
-        <div class="spinner"></div>
-        <p>Yükleniyor...</p>
-    </div>
 
     <script src="script.js"></script>
 </body>

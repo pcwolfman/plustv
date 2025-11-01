@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlusTV - Canlı TV İzle</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">📺 PlusTV</h1>
+            <p class="tagline">Canlı TV İzleme Platformu</p>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Kanal ara...">
+                </div>
+                
+                <div class="categories">
+                    <h3>Kategoriler</h3>
+                    <button class="category-btn active" data-category="all">Tümü</button>
+                    <button class="category-btn" data-category="news">Haber</button>
+                    <button class="category-btn" data-category="sports">Spor</button>
+                    <button class="category-btn" data-category="entertainment">Eğlence</button>
+                    <button class="category-btn" data-category="movie">Sinema</button>
+                    <button class="category-btn" data-category="music">Müzik</button>
+                </div>
+
+                <div class="channel-list" id="channelList">
+                    <!-- Kanallar JavaScript ile eklenecek -->
+                </div>
+            </aside>
+
+            <main class="player-section">
+                <div class="video-container" id="videoContainer">
+                    <div class="video-placeholder">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">📺</div>
+                            <h2>Bir Kanal Seçin</h2>
+                            <p>Sol taraftaki listeden izlemek istediğiniz kanalı seçin</p>
+                            <div class="info-box">
+                                <p><strong>💡 İpucu:</strong> Tam ekran için videoya çift tıklayın</p>
+                            </div>
+                        </div>
+                    </div>
+                    <video id="videoPlayer" class="video-player" controls autoplay muted playsinline>
+                        Tarayıcınız video oynatmayı desteklemiyor.
+                    </video>
+                    <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
+                </div>
+                
+                <div class="current-channel-info" id="currentChannelInfo" style="display: none;">
+                    <h3 id="currentChannelName"></h3>
+                    <p id="currentChannelCategory"></p>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn" id="fullscreenBtn" title="Tam Ekran">
+                        <span>⛶</span> Tam Ekran
+                    </button>
+                    <button class="control-btn" id="volumeBtn" title="Ses Aç/Kapat">
+                        <span id="volumeIcon">🔊</span> Ses
+                    </button>
+                    <button class="control-btn" id="qualityBtn" title="Kalite" style="display: none;">
+                        <span>⚙️</span> Kalite
+                    </button>
+                </div>
+            </main>
+        </div>
+
+        <footer class="footer">
+            <p>© 2024 PlusTV - Tüm hakları saklıdır</p>
+            <p class="note">Not: Kanalların erişilebilirliği internet bağlantınıza ve yayın kaynağına bağlıdır.</p>
+        </footer>
+    </div>
+
+    <div class="loading" id="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Yükleniyor...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

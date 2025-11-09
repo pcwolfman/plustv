@@ -4,50 +4,106 @@ let channels = [];
 // M3U dosyasını yükle ve parse et
 async function loadChannelsFromM3U() {
     try {
-        const response = await fetch('TRDECesitlikanallar.m3u');
+        const response = await fetch('https://iptv-org.github.io/iptv/languages/tur.m3u');
         const text = await response.text();
         const lines = text.split('\n');
         
         let currentChannel = null;
         let channelId = 1;
+        let nextLineIsUrl = false;
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             
-            if (line.startsWith('#EXTINF:-1,')) {
-                const channelName = line.replace('#EXTINF:-1,', '').trim();
-                currentChannel = {
-                    id: channelId++,
-                    name: channelName,
-                    type: 'm3u8'
-                };
-            } else if (line && !line.startsWith('#') && currentChannel) {
-                currentChannel.url = line;
+            // Boş satırları atla
+            if (!line) continue;
+            
+            // EXTINF satırını parse et
+            if (line.startsWith('#EXTINF:')) {
+                // Metadata'dan bilgileri çıkar
+                const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
+                const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
+                const groupTitleMatch = line.match(/group-title="([^"]*)"/);
                 
-                // Kategori belirle
-                const nameUpper = currentChannel.name.toUpperCase();
+                // Kanal adını al (son kısımda, virgülden sonra)
+                // Virgül sonrası kısmı al, ancak parantez içindeki kalite bilgisini temizle
+                const channelNameMatch = line.match(/,(.*)$/);
+                let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
+                // Kalite bilgisini kaldır: (1080p), (720p), [Not 24/7] gibi
+                channelName = channelName.replace(/\s*\([^)]*\)\s*/g, '').replace(/\s*\[[^\]]*\]\s*/g, '').trim();
+                
+                // group-title'i kategori olarak kullan
+                const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Undefined';
+                
+                // Kategoriyi Türkçe kategori isimlerine çevir
                 let category = 'entertainment';
                 let icon = '📺';
                 
-                if (nameUpper.match(/HABER|CNN|NTV|TRT HABER|A HABER|TGRT|SKY TURK|HABERTURK|HABERGLOBAL|AKIT|ULKE|FLASH HABER|TH TURK HABER|HABER 61/)) {
+                const groupUpper = groupTitle.toUpperCase();
+                if (groupUpper === 'NEWS' || groupUpper.includes('HABER')) {
                     category = 'news';
                     icon = '📰';
-                } else if (nameUpper.match(/SPOR|BEIN|TRT SPOR|SPORTSTV|FANATIK|ASPOR|HT SPOR|GS TV|FB TV/)) {
+                } else if (groupUpper === 'SPORTS' || groupUpper.includes('SPOR')) {
                     category = 'sports';
                     icon = '⚽';
-                } else if (nameUpper.match(/MUZIK|POWER|NUMBER ONE|KRAL|RADYO|MUSIC|TRT MUZIK|DREAM TURK|NR 1|TATLISES/)) {
+                } else if (groupUpper === 'MUSIC' || groupUpper.includes('MUZIK')) {
                     category = 'music';
                     icon = '🎵';
-                } else if (nameUpper.match(/SINEMA|MOVIE|CINEMA|BELGESEL|TLC|DMAX|TRT BELGESEL|NATIONAL GEO|DISCOVERY|CINE/)) {
+                } else if (groupUpper === 'DOCUMENTARY' || groupUpper.includes('BELGESEL') || groupUpper.includes('SINEMA') || groupUpper === 'MOVIE') {
                     category = 'movie';
                     icon = '🎬';
+                } else if (groupUpper === 'ENTERTAINMENT' || groupUpper === 'GENERAL') {
+                    category = 'entertainment';
+                    icon = '📺';
+                } else if (groupUpper === 'KIDS' || groupUpper.includes('ÇOCUK')) {
+                    category = 'entertainment';
+                    icon = '📺';
+                } else {
+                    // Eğer kategori belirlenemezse, kanal adına göre tahmin et
+                    const nameUpper = channelName.toUpperCase();
+                    if (nameUpper.match(/HABER|CNN|NTV|TRT HABER|A HABER|TGRT|SKY TURK|HABERTURK|HABERGLOBAL|AKIT|ULKE|FLASH HABER|TH TURK HABER|HABER 61|360|24 TV|AA LIVE/)) {
+                        category = 'news';
+                        icon = '📰';
+                    } else if (nameUpper.match(/SPOR|BEIN|TRT SPOR|SPORTSTV|FANATIK|ASPOR|HT SPOR|GS TV|FB TV|A SPOR/)) {
+                        category = 'sports';
+                        icon = '⚽';
+                    } else if (nameUpper.match(/MUZIK|POWER|NUMBER ONE|KRAL|RADYO|MUSIC|TRT MUZIK|DREAM TURK|NR 1|TATLISES/)) {
+                        category = 'music';
+                        icon = '🎵';
+                    } else if (nameUpper.match(/SINEMA|MOVIE|CINEMA|BELGESEL|TLC|DMAX|TRT BELGESEL|NATIONAL GEO|DISCOVERY|CINE|VIASAT|EXPLORE/)) {
+                        category = 'movie';
+                        icon = '🎬';
+                    }
                 }
                 
-                currentChannel.category = category;
-                currentChannel.icon = icon;
+                currentChannel = {
+                    id: channelId++,
+                    name: channelName,
+                    type: 'm3u8',
+                    category: category,
+                    icon: icon,
+                    tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
+                    tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : '',
+                    groupTitle: groupTitle
+                };
+                nextLineIsUrl = true;
+            } 
+            // EXTVLCOPT gibi ekstra satırları atla (ama currentChannel'ı koru)
+            else if (line.startsWith('#EXTVLCOPT:') || line.startsWith('#EXTM3U')) {
+                // Bu satırları atla, bir sonraki satıra geç
+                continue;
+            } 
+            // Diğer EXT satırlarını atla
+            else if (line.startsWith('#EXT') && !line.startsWith('#EXTINF:')) {
+                continue;
+            }
+            // URL satırı (http veya https ile başlayan)
+            else if ((line.startsWith('http://') || line.startsWith('https://')) && currentChannel && nextLineIsUrl) {
+                currentChannel.url = line;
                 
                 channels.push(currentChannel);
                 currentChannel = null;
+                nextLineIsUrl = false;
             }
         }
         

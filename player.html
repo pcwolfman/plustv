@@ -29,8 +29,21 @@
                 <button class="tab-btn" data-tab="favorites">⭐ Favoriler</button>
             </div>
             
-            <div class="sidebar-search">
-                <input type="text" id="sidebarSearch" placeholder="Kanal ara...">
+            <div class="sidebar-category-select">
+                <select id="categorySelect" class="category-select">
+                    <option value="all">Tüm Kategoriler</option>
+                    <option value="Ulusal">Ulusal</option>
+                    <option value="Haber">Haber</option>
+                    <option value="Spor">Spor</option>
+                    <option value="Eglence">Eğlence</option>
+                    <option value="Muzik">Müzik</option>
+                    <option value="Belgesel">Belgesel</option>
+                    <option value="Dini">Dini</option>
+                    <option value="Cocuk">Çocuk</option>
+                    <option value="Ekonomi">Ekonomi</option>
+                    <option value="Yurt Disi">Yurt Dışı</option>
+                    <option value="Radyo Canlı">Radyo Canlı</option>
+                </select>
             </div>
             
             <div class="channels-sidebar-list" id="channelsSidebarList">
@@ -40,13 +53,6 @@
 
         <!-- Ana Video Player Alanı -->
         <main class="player-main">
-            <div class="player-header">
-                <div class="player-info">
-                    <h2 id="currentChannelName">Kanal Seçin</h2>
-                    <p id="currentChannelCategory"></p>
-                </div>
-            </div>
-            
             <div class="video-container-player" id="videoContainerPlayer">
                 <div class="video-placeholder-player" id="videoPlaceholderPlayer">
                     <div class="placeholder-content">
@@ -61,14 +67,12 @@
                 </div>
                 <video id="videoPlayer" class="video-player" controls autoplay playsinline allow="picture-in-picture"></video>
                 <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
-                <div class="video-custom-controls">
-                    <button class="pip-btn" id="pipBtn" title="Pencere İçinde Pencere">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="2" y="2" width="8" height="8" rx="1"></rect>
-                            <rect x="14" y="14" width="8" height="8" rx="1"></rect>
-                        </svg>
-                    </button>
-                </div>
+                <button class="pip-btn-top" id="pipBtn" title="Pencere İçinde Pencere">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="8" height="8" rx="1"></rect>
+                        <rect x="14" y="14" width="8" height="8" rx="1"></rect>
+                    </svg>
+                </button>
             </div>
         </main>
     </div>

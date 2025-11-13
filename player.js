@@ -8,7 +8,7 @@ let activeTab = 'channels';
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
 const sidebarCategoryTitle = document.getElementById('sidebarCategoryTitle');
-const sidebarSearch = document.getElementById('sidebarSearch');
+const categorySelect = document.getElementById('categorySelect');
 const channelsSidebarList = document.getElementById('channelsSidebarList');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const videoPlayer = document.getElementById('videoPlayer');
@@ -16,8 +16,6 @@ const iframePlayer = document.getElementById('iframePlayer');
 const videoContainerPlayer = document.getElementById('videoContainerPlayer');
 const videoPlaceholderPlayer = document.getElementById('videoPlaceholderPlayer');
 const loadingPlayer = document.getElementById('loadingPlayer');
-const currentChannelName = document.getElementById('currentChannelName');
-const currentChannelCategory = document.getElementById('currentChannelCategory');
 const pipBtn = document.getElementById('pipBtn');
 
 // Initialize
@@ -59,17 +57,21 @@ function setupEventListeners() {
         });
     });
     
-    // Search
-    sidebarSearch.addEventListener('input', () => {
-        renderSidebarChannels();
-    });
+    // Category selection
+    if (categorySelect) {
+        categorySelect.value = currentCategory;
+        categorySelect.addEventListener('change', () => {
+            currentCategory = categorySelect.value;
+            renderSidebarChannels();
+        });
+    }
     
     // Picture-in-Picture
     if (pipBtn) {
+        pipBtn.style.display = 'flex';
+        pipBtn.addEventListener('click', togglePictureInPicture);
+        
         if (document.pictureInPictureEnabled && videoPlayer.disablePictureInPicture !== true) {
-            pipBtn.style.display = 'flex';
-            pipBtn.addEventListener('click', togglePictureInPicture);
-            
             videoPlayer.addEventListener('enterpictureinpicture', () => {
                 pipBtn.classList.add('active');
                 pipBtn.title = 'Pencere İçinde Pencere Modundan Çık';
@@ -79,8 +81,6 @@ function setupEventListeners() {
                 pipBtn.classList.remove('active');
                 pipBtn.title = 'Pencere İçinde Pencere';
             });
-        } else {
-            pipBtn.style.display = 'none';
         }
     }
     
@@ -144,11 +144,13 @@ async function loadChannelsFromM3U() {
 // Render Sidebar Channels
 function renderSidebarChannels() {
     let filteredChannels = [];
-    const searchTerm = sidebarSearch.value.toLowerCase().trim();
     
     if (activeTab === 'favorites') {
         filteredChannels = channels.filter(ch => favoriteChannels.includes(ch.id));
         sidebarCategoryTitle.textContent = 'Favori Kanallar';
+        if (categorySelect) {
+            categorySelect.style.display = 'none';
+        }
     } else {
         // Show channels from current category
         if (currentCategory === 'all') {
@@ -168,16 +170,14 @@ function renderSidebarChannels() {
             'Dini': 'Dini Kanallar',
             'Cocuk': 'Çocuk Kanalları',
             'Ekonomi': 'Ekonomi Kanalları',
-            'Yurt Disi': 'Yurt Dışı Kanallar'
+            'Yurt Disi': 'Yurt Dışı Kanallar',
+            'Radyo Canlı': 'Radyo Canlı'
         };
         sidebarCategoryTitle.textContent = categoryNames[currentCategory] || 'Kanallar';
-    }
-    
-    // Filter by search
-    if (searchTerm) {
-        filteredChannels = filteredChannels.filter(ch => 
-            ch.name.toLowerCase().includes(searchTerm)
-        );
+        if (categorySelect) {
+            categorySelect.style.display = 'block';
+            categorySelect.value = currentCategory;
+        }
     }
     
     channelsSidebarList.innerHTML = '';
@@ -242,10 +242,6 @@ function playChannel(channel) {
     
     currentChannel = channel;
     
-    // Update UI
-    currentChannelName.textContent = channel.name;
-    currentChannelCategory.textContent = channel.category;
-    
     // Update active channel in sidebar
     document.querySelectorAll('.channel-sidebar-item').forEach(item => {
         item.classList.remove('active');
@@ -279,6 +275,10 @@ function playChannel(channel) {
     // Play video
     if (channel.url.includes('.m3u8')) {
         playM3U8(channel.url);
+    } else if (channel.url.includes('youtube.com') || channel.url.includes('youtu.be')) {
+        // YouTube linklerini embed formatına çevir
+        const youtubeUrl = convertYouTubeToEmbed(channel.url);
+        playIframe(youtubeUrl);
     } else {
         playIframe(channel.url);
     }
@@ -398,6 +398,35 @@ function playM3U8(url) {
         loadingPlayer.classList.remove('active');
         showError('Tarayıcınız bu video formatını desteklemiyor.');
     }
+}
+
+// Convert YouTube URL to embed format
+function convertYouTubeToEmbed(url) {
+    let videoId = '';
+    
+    // YouTube URL formatlarını kontrol et
+    if (url.includes('youtube.com/watch?v=')) {
+        const match = url.match(/[?&]v=([^&]+)/);
+        if (match) {
+            videoId = match[1];
+        }
+    } else if (url.includes('youtu.be/')) {
+        const match = url.match(/youtu\.be\/([^?&]+)/);
+        if (match) {
+            videoId = match[1];
+        }
+    } else if (url.includes('youtube.com/embed/')) {
+        // Zaten embed formatında
+        return url;
+    }
+    
+    if (videoId) {
+        // URL parametrelerini temizle (list, start_radio vb.)
+        videoId = videoId.split('&')[0].split('?')[0];
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    }
+    
+    return url;
 }
 
 // Play Iframe

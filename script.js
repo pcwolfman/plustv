@@ -177,7 +177,8 @@ function renderChannels() {
         'Dini': 'Dini Kanallar',
         'Cocuk': 'Çocuk Kanalları',
         'Ekonomi': 'Ekonomi Kanalları',
-        'Yurt Disi': 'Yurt Dışı Kanallar'
+        'Yurt Disi': 'Yurt Dışı Kanallar',
+        'Radyo Canlı': 'Radyo Canlı'
     };
     
     categoryTitle.textContent = searchTerm 

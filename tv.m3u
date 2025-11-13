@@ -177,3 +177,37 @@ http://canbroadcast.com:7000/canlican/tv.m3u8
 https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/playlist.m3u8
 #EXTINF:-1 tvg-id="SyriaTV.tr" tvg-logo="https://i.imgur.com/FjuVuXF.jpeg" group-title="Yurt Disi",Syria TV
 https://live.kwikmotion.com/syriatvlive/syriatv.smil/playlist_dvr.m3u8
+#EXTINF:-1 tvg-id="KralPopRadyo.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Kral POP Radyo
+https://www.youtube.com/watch?v=5J-w9AHKHsc
+#EXTINF:-1 tvg-id="Radyo45lik.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Radyo 45'lik
+https://www.youtube.com/watch?v=dk_uf4o2atY
+#EXTINF:-1 tvg-id="SlowTurk.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Slow Türk
+https://www.youtube.com/watch?v=tWTHF0r2oEw
+#EXTINF:-1 tvg-id="KralFM.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Kral FM
+https://www.youtube.com/watch?v=A49bKX8gb-8
+#EXTINF:-1 tvg-id="FenomenTurk.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Fenomen Türk
+https://www.youtube.com/watch?v=lYq5eFZp2GQ
+#EXTINF:-1 tvg-id="KalpFM.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Kalp FM
+https://www.youtube.com/watch?v=_V8XXGBh_kw
+#EXTINF:-1 tvg-id="AkustikTurku.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Akustik Türkü
+https://www.youtube.com/watch?v=_qm_JqY-6OI
+#EXTINF:-1 tvg-id="RadyoDamar.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Radyo Damar
+https://www.youtube.com/watch?v=gbNBCvSkFlg
+#EXTINF:-1 tvg-id="Radyo44.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Radyo 44
+https://www.youtube.com/watch?v=gsD3xoM8v3k
+#EXTINF:-1 tvg-id="Radyo7.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Radyo 7
+https://www.youtube.com/watch?v=Nnn6OWQ6kk0
+#EXTINF:-1 tvg-id="RadyoSeymen.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Radyo Seymen
+https://www.youtube.com/watch?v=D-bO7oD8xNk
+#EXTINF:-1 tvg-id="KaradenizAkustik.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Karadeniz Akustik
+https://www.youtube.com/watch?v=Fru_Ss-TqgY
+#EXTINF:-1 tvg-id="Radyo2000.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Radyo 2000
+https://www.youtube.com/watch?v=ydJGw5tjJyA&list=RDydJGw5tjJyA&start_radio=1
+#EXTINF:-1 tvg-id="HitRemix.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Hit Remix
+https://www.youtube.com/watch?v=4j0GAzbACjk
+#EXTINF:-1 tvg-id="VivaArabesk.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Viva Arabesk
+https://www.youtube.com/watch?v=Vie289ngRO8
+#EXTINF:-1 tvg-id="ArabeskTurk.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",Arabesk Türk
+https://www.youtube.com/watch?v=IshBtT-tdxQ
+#EXTINF:-1 tvg-id="EnCokDinlenenTurkuler.tr" tvg-logo="https://i.imgur.com/radio.png" group-title="Radyo Canlı",En Çok Dinlenen Türküler
+https://www.youtube.com/watch?v=vhOeV8QsVzo&list=RDvhOeV8QsVzo&start_radio=1

@@ -28,6 +28,44 @@
 
         <!-- Kategori Kutucukları -->
         <section class="categories-section">
+            <div class="view-menu-container">
+                <button class="view-menu-btn" id="viewMenuBtn" title="Görünüm Seçenekleri">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                    </svg>
+                </button>
+                <div class="view-menu-dropdown" id="viewMenuDropdown">
+                    <button class="view-option" data-view="large" title="Büyük Kart">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        </svg>
+                        <span>Büyük Kart</span>
+                    </button>
+                    <button class="view-option" data-view="small" title="Küçük Kart">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>Küçük Kart</span>
+                    </button>
+                    <button class="view-option active" data-view="list" title="Liste">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                        <span>Liste</span>
+                    </button>
+                </div>
+            </div>
             <div class="categories-container">
                 <div class="category-card" data-category="all">
                     <div class="category-icon">📺</div>
@@ -87,38 +125,6 @@
             </div>
         </section>
 
-        <!-- Video Player Modal -->
-        <div class="video-modal" id="videoModal">
-            <div class="video-modal-content">
-                <div class="video-controls">
-                    <button class="pip-btn" id="pipBtn" title="Pencere İçinde Pencere">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="2" y="2" width="8" height="8" rx="1"></rect>
-                            <rect x="14" y="14" width="8" height="8" rx="1"></rect>
-                        </svg>
-                    </button>
-                    <button class="close-modal" id="closeModal" title="Kapat">✕</button>
-                </div>
-                <div class="video-container" id="videoContainer">
-                    <div class="video-placeholder" id="videoPlaceholder">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">📺</div>
-                            <h2>Kanal Yükleniyor...</h2>
-                        </div>
-                    </div>
-                    <div class="loading-overlay" id="loading">
-                        <div class="spinner"></div>
-                        <p>Yükleniyor...</p>
-                    </div>
-                    <video id="videoPlayer" class="video-player" controls autoplay playsinline allow="picture-in-picture"></video>
-                    <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
-                </div>
-                <div class="video-info" id="videoInfo">
-                    <h3 id="currentChannelName"></h3>
-                    <p id="currentChannelCategory"></p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="script.js"></script>

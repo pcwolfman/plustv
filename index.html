@@ -7,123 +7,119 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="main-content">
-            <aside class="sidebar">
+    <div class="app-container">
+        <!-- Arama Çubuğu - En Üstte -->
+        <header class="search-header">
+            <div class="search-container">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="🔍 Kanal ara...">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Kanal ara...">
+                    <button class="clear-search" id="clearSearch" style="display: none;">✕</button>
                 </div>
-                
-                <div class="categories-menu">
-                    <h3>Kategoriler</h3>
-                    <div class="category-accordion" data-category="all">
-                        <button class="category-header">
-                            <div class="category-icon">📺</div>
-                            <div class="category-info">
-                                <div class="category-name">Tümü</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="favorites">
-                        <button class="category-header">
-                            <div class="category-icon">⭐</div>
-                            <div class="category-info">
-                                <div class="category-name">Favori Kanallar</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="recent">
-                        <button class="category-header">
-                            <div class="category-icon">🕐</div>
-                            <div class="category-info">
-                                <div class="category-name">Son İzlenen</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="news">
-                        <button class="category-header">
-                            <div class="category-icon">📰</div>
-                            <div class="category-info">
-                                <div class="category-name">Haber</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="sports">
-                        <button class="category-header">
-                            <div class="category-icon">⚽</div>
-                            <div class="category-info">
-                                <div class="category-name">Spor</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="entertainment">
-                        <button class="category-header">
-                            <div class="category-icon">🎭</div>
-                            <div class="category-info">
-                                <div class="category-name">Eğlence</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="movie">
-                        <button class="category-header">
-                            <div class="category-icon">🎬</div>
-                            <div class="category-info">
-                                <div class="category-name">Sinema</div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="category-accordion" data-category="music">
-                        <button class="category-header">
-                            <div class="category-icon">🎵</div>
-                            <div class="category-info">
-                                <div class="category-name">Müzik</div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </aside>
+            </div>
+        </header>
 
-            <main class="player-section">
-                <div class="channels-panel" id="channelsPanel">
-                    <div class="channels-header">
-                        <h3 id="activeCategoryName">Tüm Kanallar</h3>
-                    </div>
-                    <div class="channels-list" id="channelsList">
-                        <!-- Kanallar buraya eklenecek -->
-                    </div>
+        <!-- Kategori Kutucukları -->
+        <section class="categories-section">
+            <div class="categories-container">
+                <div class="category-card" data-category="all">
+                    <div class="category-icon">📺</div>
+                    <div class="category-name">Tümü</div>
                 </div>
-                <div class="video-wrapper">
-                    <div class="video-container" id="videoContainer">
-                        <div class="video-placeholder">
-                            <div class="placeholder-content">
-                                <h1 class="placeholder-title">Plus TV</h1>
-                                <div class="placeholder-icon">📺</div>
-                                <h2>Bir Kanal Seçin</h2>
-                                <p>Sol taraftaki kategoriden bir kategori seçin, ortadaki listeden kanal seçin</p>
-                                <div class="contact-info">
-                                    <p>İletişim : Telegram : <a href="https://t.me/carautoplus" target="_blank">t.me/carautoplus</a></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="loading-overlay" id="loading">
-                            <div class="spinner"></div>
-                            <p>Yükleniyor...</p>
-                        </div>
-                        <video id="videoPlayer" class="video-player" controls autoplay playsinline>
-                            Tarayıcınız video oynatmayı desteklemiyor.
-                        </video>
-                        <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
-                    </div>
+                <div class="category-card" data-category="Ulusal">
+                    <div class="category-icon">📡</div>
+                    <div class="category-name">Ulusal</div>
                 </div>
-            </main>
+                <div class="category-card" data-category="Haber">
+                    <div class="category-icon">📰</div>
+                    <div class="category-name">Haber</div>
+                </div>
+                <div class="category-card" data-category="Spor">
+                    <div class="category-icon">⚽</div>
+                    <div class="category-name">Spor</div>
+                </div>
+                <div class="category-card" data-category="Eglence">
+                    <div class="category-icon">🎭</div>
+                    <div class="category-name">Eğlence</div>
+                </div>
+                <div class="category-card" data-category="Muzik">
+                    <div class="category-icon">🎵</div>
+                    <div class="category-name">Müzik</div>
+                </div>
+                <div class="category-card" data-category="Belgesel">
+                    <div class="category-icon">🎬</div>
+                    <div class="category-name">Belgesel</div>
+                </div>
+                <div class="category-card" data-category="Dini">
+                    <div class="category-icon">🕌</div>
+                    <div class="category-name">Dini</div>
+                </div>
+                <div class="category-card" data-category="Cocuk">
+                    <div class="category-icon">👶</div>
+                    <div class="category-name">Çocuk</div>
+                </div>
+                <div class="category-card" data-category="Ekonomi">
+                    <div class="category-icon">💰</div>
+                    <div class="category-name">Ekonomi</div>
+                </div>
+                <div class="category-card" data-category="Yurt Disi">
+                    <div class="category-icon">🌍</div>
+                    <div class="category-name">Yurt Dışı</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kanallar Bölümü -->
+        <section class="channels-section" id="channelsSection">
+            <div class="channels-header">
+                <h2 id="categoryTitle">Tüm Kanallar</h2>
+                <span id="channelCount" class="channel-count"></span>
+            </div>
+            <div class="channels-grid" id="channelsGrid">
+                <!-- Kanallar buraya eklenecek -->
+            </div>
+        </section>
+
+        <!-- Video Player Modal -->
+        <div class="video-modal" id="videoModal">
+            <div class="video-modal-content">
+                <div class="video-controls">
+                    <button class="pip-btn" id="pipBtn" title="Pencere İçinde Pencere">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="8" height="8" rx="1"></rect>
+                            <rect x="14" y="14" width="8" height="8" rx="1"></rect>
+                        </svg>
+                    </button>
+                    <button class="close-modal" id="closeModal" title="Kapat">✕</button>
+                </div>
+                <div class="video-container" id="videoContainer">
+                    <div class="video-placeholder" id="videoPlaceholder">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">📺</div>
+                            <h2>Kanal Yükleniyor...</h2>
+                        </div>
+                    </div>
+                    <div class="loading-overlay" id="loading">
+                        <div class="spinner"></div>
+                        <p>Yükleniyor...</p>
+                    </div>
+                    <video id="videoPlayer" class="video-player" controls autoplay playsinline allow="picture-in-picture"></video>
+                    <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen style="display: none;"></iframe>
+                </div>
+                <div class="video-info" id="videoInfo">
+                    <h3 id="currentChannelName"></h3>
+                    <p id="currentChannelCategory"></p>
+                </div>
+            </div>
         </div>
-
     </div>
-
 
     <script src="script.js"></script>
 </body>

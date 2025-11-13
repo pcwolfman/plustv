@@ -1,142 +1,27 @@
-﻿// TV Kanalları Veritabanı - M3U dosyasından dinamik yükleme
+﻿// Global Variables
 let channels = [];
-
-// M3U dosyasını yükle ve parse et
-async function loadChannelsFromM3U() {
-    try {
-        const response = await fetch('https://iptv-org.github.io/iptv/languages/tur.m3u');
-        const text = await response.text();
-        const lines = text.split('\n');
-        
-        let currentChannel = null;
-        let channelId = 1;
-        let nextLineIsUrl = false;
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            
-            // Boş satırları atla
-            if (!line) continue;
-            
-            // EXTINF satırını parse et
-            if (line.startsWith('#EXTINF:')) {
-                // Metadata'dan bilgileri çıkar
-                const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
-                const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
-                const groupTitleMatch = line.match(/group-title="([^"]*)"/);
-                
-                // Kanal adını al (son kısımda, virgülden sonra)
-                // Virgül sonrası kısmı al, ancak parantez içindeki kalite bilgisini temizle
-                const channelNameMatch = line.match(/,(.*)$/);
-                let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
-                // Kalite bilgisini kaldır: (1080p), (720p), [Not 24/7] gibi
-                channelName = channelName.replace(/\s*\([^)]*\)\s*/g, '').replace(/\s*\[[^\]]*\]\s*/g, '').trim();
-                
-                // group-title'i kategori olarak kullan
-                const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Undefined';
-                
-                // Kategoriyi Türkçe kategori isimlerine çevir
-                let category = 'entertainment';
-                let icon = '📺';
-                
-                const groupUpper = groupTitle.toUpperCase();
-                if (groupUpper === 'NEWS' || groupUpper.includes('HABER')) {
-                    category = 'news';
-                    icon = '📰';
-                } else if (groupUpper === 'SPORTS' || groupUpper.includes('SPOR')) {
-                    category = 'sports';
-                    icon = '⚽';
-                } else if (groupUpper === 'MUSIC' || groupUpper.includes('MUZIK')) {
-                    category = 'music';
-                    icon = '🎵';
-                } else if (groupUpper === 'DOCUMENTARY' || groupUpper.includes('BELGESEL') || groupUpper.includes('SINEMA') || groupUpper === 'MOVIE') {
-                    category = 'movie';
-                    icon = '🎬';
-                } else if (groupUpper === 'ENTERTAINMENT' || groupUpper === 'GENERAL') {
-                    category = 'entertainment';
-                    icon = '📺';
-                } else if (groupUpper === 'KIDS' || groupUpper.includes('ÇOCUK')) {
-                    category = 'entertainment';
-                    icon = '📺';
-                } else {
-                    // Eğer kategori belirlenemezse, kanal adına göre tahmin et
-                    const nameUpper = channelName.toUpperCase();
-                    if (nameUpper.match(/HABER|CNN|NTV|TRT HABER|A HABER|TGRT|SKY TURK|HABERTURK|HABERGLOBAL|AKIT|ULKE|FLASH HABER|TH TURK HABER|HABER 61|360|24 TV|AA LIVE/)) {
-                        category = 'news';
-                        icon = '📰';
-                    } else if (nameUpper.match(/SPOR|BEIN|TRT SPOR|SPORTSTV|FANATIK|ASPOR|HT SPOR|GS TV|FB TV|A SPOR/)) {
-                        category = 'sports';
-                        icon = '⚽';
-                    } else if (nameUpper.match(/MUZIK|POWER|NUMBER ONE|KRAL|RADYO|MUSIC|TRT MUZIK|DREAM TURK|NR 1|TATLISES/)) {
-                        category = 'music';
-                        icon = '🎵';
-                    } else if (nameUpper.match(/SINEMA|MOVIE|CINEMA|BELGESEL|TLC|DMAX|TRT BELGESEL|NATIONAL GEO|DISCOVERY|CINE|VIASAT|EXPLORE/)) {
-                        category = 'movie';
-                        icon = '🎬';
-                    }
-                }
-                
-                currentChannel = {
-                    id: channelId++,
-                    name: channelName,
-                    type: 'm3u8',
-                    category: category,
-                    icon: icon,
-                    tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
-                    tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : '',
-                    groupTitle: groupTitle
-                };
-                nextLineIsUrl = true;
-            } 
-            // EXTVLCOPT gibi ekstra satırları atla (ama currentChannel'ı koru)
-            else if (line.startsWith('#EXTVLCOPT:') || line.startsWith('#EXTM3U')) {
-                // Bu satırları atla, bir sonraki satıra geç
-                continue;
-            } 
-            // Diğer EXT satırlarını atla
-            else if (line.startsWith('#EXT') && !line.startsWith('#EXTINF:')) {
-                continue;
-            }
-            // URL satırı (http veya https ile başlayan)
-            else if ((line.startsWith('http://') || line.startsWith('https://')) && currentChannel && nextLineIsUrl) {
-                currentChannel.url = line;
-                
-                channels.push(currentChannel);
-                currentChannel = null;
-                nextLineIsUrl = false;
-            }
-        }
-        
-        // Kanalları yükledikten sonra render et
-        filteredChannels = channels;
-        renderChannels();
-        
-        console.log(`✅ ${channels.length} kanal yüklendi!`);
-    } catch (error) {
-        console.error('M3U dosyası yüklenemedi:', error);
-        showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');
-    }
-}
-
-// Global Değişkenler
-let currentChannel = null;
 let currentCategory = 'all';
-let filteredChannels = [];
-let favoriteChannels = JSON.parse(localStorage.getItem('favoriteChannels') || '[]');
-let recentChannels = JSON.parse(localStorage.getItem('recentChannels') || '[]');
+let currentChannel = null;
 
-// DOM Elementleri
-const videoContainer = document.getElementById('videoContainer');
+// DOM Elements
+const searchInput = document.getElementById('searchInput');
+const clearSearch = document.getElementById('clearSearch');
+const categoryCards = document.querySelectorAll('.category-card');
+const channelsGrid = document.getElementById('channelsGrid');
+const categoryTitle = document.getElementById('categoryTitle');
+const channelCount = document.getElementById('channelCount');
+const videoModal = document.getElementById('videoModal');
+const closeModal = document.getElementById('closeModal');
 const videoPlayer = document.getElementById('videoPlayer');
 const iframePlayer = document.getElementById('iframePlayer');
-const videoPlaceholder = document.querySelector('.video-placeholder');
-const searchInput = document.getElementById('searchInput');
+const videoContainer = document.getElementById('videoContainer');
+const videoPlaceholder = document.getElementById('videoPlaceholder');
 const loading = document.getElementById('loading');
-const channelsPanel = document.getElementById('channelsPanel');
-const channelsList = document.getElementById('channelsList');
-const activeCategoryName = document.getElementById('activeCategoryName');
+const currentChannelName = document.getElementById('currentChannelName');
+const currentChannelCategory = document.getElementById('currentChannelCategory');
+const pipBtn = document.getElementById('pipBtn');
 
-// Sayfa Yüklendiğinde
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadChannelsFromM3U();
     setupEventListeners();
@@ -144,133 +29,227 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Event Listeners
 function setupEventListeners() {
-    // Arama
+    // Search
     searchInput.addEventListener('input', handleSearch);
-    
-    // Kategori Seçimi - Sağda kanalları göster
-    const categoryAccordions = document.querySelectorAll('.category-accordion');
-    categoryAccordions.forEach(accordion => {
-        const header = accordion.querySelector('.category-header');
-        
-        header.addEventListener('click', () => {
-            const category = accordion.dataset.category;
-            currentCategory = category;
-            
-            // Tüm kategorileri pasif yap
-            categoryAccordions.forEach(acc => {
-                acc.querySelector('.category-header').classList.remove('active');
-            });
-            
-            // Seçili kategoriyi aktif yap
-            header.classList.add('active');
-            
-            // Sağda kanalları göster
-            showCategoryChannels(category);
+    clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        clearSearch.style.display = 'none';
+        handleSearch({ target: searchInput });
+    });
+
+    // Category selection
+    categoryCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const category = card.dataset.category;
+            selectCategory(category);
         });
     });
 
-    // Video Çift Tıklama ile Tam Ekran (sadece video player üstünde)
-    videoPlayer.addEventListener('dblclick', toggleFullscreen);
-    
-    // Video Oynatıcı Event'leri
-    videoPlayer.addEventListener('play', () => {
-        videoPlaceholder.style.display = 'none';
+    // Close modal
+    closeModal.addEventListener('click', closeVideoModal);
+    videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) {
+            closeVideoModal();
+        }
     });
-    
-    videoPlayer.addEventListener('error', handleVideoError);
+
+    // Picture-in-Picture
+    if (pipBtn) {
+        // Check if PiP is supported
+        if (document.pictureInPictureEnabled && videoPlayer.disablePictureInPicture !== true) {
+            pipBtn.style.display = 'flex';
+            pipBtn.addEventListener('click', togglePictureInPicture);
+            
+            // Update button state when PiP changes
+            videoPlayer.addEventListener('enterpictureinpicture', () => {
+                pipBtn.classList.add('active');
+                pipBtn.title = 'Pencere İçinde Pencere Modundan Çık';
+            });
+            
+            videoPlayer.addEventListener('leavepictureinpicture', () => {
+                pipBtn.classList.remove('active');
+                pipBtn.title = 'Pencere İçinde Pencere';
+            });
+        } else {
+            pipBtn.style.display = 'none';
+        }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeVideoModal();
+        }
+    });
 }
 
-// Kategori kanallarını sağda göster
-function showCategoryChannels(category) {
-    if (!channelsList) return;
+// Load M3U file
+async function loadChannelsFromM3U() {
+    try {
+        const response = await fetch('tv.m3u');
+        const text = await response.text();
+        const lines = text.split('\n');
+        
+        let currentChannel = null;
+        let channelId = 1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            if (!line) continue;
+            
+            // Parse EXTINF line
+            if (line.startsWith('#EXTINF:')) {
+                const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
+                const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
+                const groupTitleMatch = line.match(/group-title="([^"]*)"/);
+                
+                // Get channel name (after comma)
+                const channelNameMatch = line.match(/,(.*)$/);
+                let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
+                
+                // Get category from group-title
+                const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                
+                // Clean category name (remove " - Yurt Disi" etc.)
+                let category = groupTitle.split(' - ')[0].trim();
+                
+                currentChannel = {
+                    id: channelId++,
+                    name: channelName,
+                    url: '',
+                    category: category,
+                    tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
+                    tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : ''
+                };
+            }
+            // URL line
+            else if ((line.startsWith('http://') || line.startsWith('https://')) && currentChannel) {
+                currentChannel.url = line;
+                channels.push(currentChannel);
+                currentChannel = null;
+            }
+        }
+        
+        console.log(`✅ ${channels.length} kanal yüklendi!`);
+        renderChannels();
+        
+        // Set first category as active
+        if (categoryCards.length > 0) {
+            categoryCards[0].classList.add('active');
+        }
+    } catch (error) {
+        console.error('M3U dosyası yüklenemedi:', error);
+        showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');
+    }
+}
+
+// Select Category
+function selectCategory(category) {
+    currentCategory = category;
     
-    let categoryChannels = [];
+    // Update active category
+    categoryCards.forEach(card => {
+        card.classList.remove('active');
+        if (card.dataset.category === category) {
+            card.classList.add('active');
+        }
+    });
     
-    if (category === 'all') {
-        categoryChannels = channels;
-    } else if (category === 'favorites') {
-        // Favori kanalları ID'ye göre bul
-        categoryChannels = channels.filter(ch => favoriteChannels.includes(ch.id));
-    } else if (category === 'recent') {
-        // Son izlenen kanalları ID'ye göre bul (ters sırada)
-        const recentIds = [...new Set(recentChannels)].reverse();
-        categoryChannels = recentIds.map(id => channels.find(ch => ch.id === id)).filter(ch => ch);
-    } else {
-        categoryChannels = channels.filter(ch => ch.category === category);
+    // Clear search
+    searchInput.value = '';
+    clearSearch.style.display = 'none';
+    
+    // Render channels
+    renderChannels();
+}
+
+// Render Channels
+function renderChannels() {
+    let filteredChannels = channels;
+    
+    // Filter by category
+    if (currentCategory !== 'all') {
+        filteredChannels = channels.filter(ch => ch.category === currentCategory);
     }
     
-    // Kategori adını güncelle
-    if (activeCategoryName) {
-        const categoryNames = {
-            'all': 'Tüm Kanallar',
-            'news': 'Haber Kanalları',
-            'sports': 'Spor Kanalları',
-            'entertainment': 'Eğlence Kanalları',
-            'movie': 'Sinema Kanalları',
-            'music': 'Müzik Kanalları',
-            'favorites': 'Favori Kanallar',
-            'recent': 'Son İzlenen Kanallar'
-        };
-        activeCategoryName.textContent = categoryNames[category] || 'Kanallar';
+    // Filter by search
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    if (searchTerm) {
+        filteredChannels = filteredChannels.filter(ch => 
+            ch.name.toLowerCase().includes(searchTerm)
+        );
     }
     
-    channelsList.innerHTML = '';
+    // Update title and count
+    const categoryNames = {
+        'all': 'Tüm Kanallar',
+        'Ulusal': 'Ulusal Kanallar',
+        'Haber': 'Haber Kanalları',
+        'Spor': 'Spor Kanalları',
+        'Eglence': 'Eğlence Kanalları',
+        'Muzik': 'Müzik Kanalları',
+        'Belgesel': 'Belgesel Kanalları',
+        'Dini': 'Dini Kanallar',
+        'Cocuk': 'Çocuk Kanalları',
+        'Ekonomi': 'Ekonomi Kanalları',
+        'Yurt Disi': 'Yurt Dışı Kanallar'
+    };
     
-    if (categoryChannels.length === 0) {
-        channelsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Bu kategoride kanal bulunamadı</p>';
+    categoryTitle.textContent = searchTerm 
+        ? `Arama: "${searchTerm}"` 
+        : (categoryNames[currentCategory] || 'Kanallar');
+    channelCount.textContent = `${filteredChannels.length} kanal`;
+    
+    // Clear grid
+    channelsGrid.innerHTML = '';
+    
+    if (filteredChannels.length === 0) {
+        channelsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                <p>Kanal bulunamadı</p>
+            </div>
+        `;
         return;
     }
     
-    categoryChannels.forEach(channel => {
-        const channelItem = document.createElement('div');
-        channelItem.className = 'channel-item';
-        const isFavorite = favoriteChannels.includes(channel.id);
-        channelItem.innerHTML = `
-            <div class="channel-icon">${channel.icon}</div>
-            <div class="channel-info">
-                <div class="channel-name">${channel.name}</div>
-            </div>
-            <button class="favorite-btn" data-channel-id="${channel.id}" title="${isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}">
-                ${isFavorite ? '⭐' : '☆'}
-            </button>
+    // Render channel cards
+    filteredChannels.forEach(channel => {
+        const channelCard = document.createElement('div');
+        channelCard.className = 'channel-card';
+        channelCard.innerHTML = `
+            ${channel.tvgLogo 
+                ? `<img src="${channel.tvgLogo}" alt="${channel.name}" class="channel-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                 <div class="channel-logo-placeholder" style="display: none;">📺</div>`
+                : `<div class="channel-logo-placeholder">📺</div>`
+            }
+            <div class="channel-name">${channel.name}</div>
+            <div class="channel-category">${channel.category}</div>
         `;
         
-        channelItem.addEventListener('click', (e) => {
-            // Favori butonuna tıklanırsa sadece favori işlemini yap
-            if (e.target.classList.contains('favorite-btn') || e.target.closest('.favorite-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.favorite-btn');
-                const channelId = parseInt(btn.dataset.channelId);
-                toggleFavorite(channelId);
-                // Buton görünümünü güncelle
-                const isFav = favoriteChannels.includes(channelId);
-                btn.textContent = isFav ? '⭐' : '☆';
-                btn.title = isFav ? 'Favorilerden çıkar' : 'Favorilere ekle';
-            } else {
-                // Kanal item'ına tıklanırsa oynat
-                playChannel(channel);
-            }
+        channelCard.addEventListener('click', () => {
+            playChannel(channel);
         });
         
-        channelsList.appendChild(channelItem);
+        channelsGrid.appendChild(channelCard);
     });
 }
 
-// İlk yüklemede tüm kanalları göster
-function renderChannels() {
-    // Favori ve son izlenen kanalları localStorage'dan yükle
-    favoriteChannels = JSON.parse(localStorage.getItem('favoriteChannels') || '[]');
-    recentChannels = JSON.parse(localStorage.getItem('recentChannels') || '[]');
+// Handle Search
+function handleSearch(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
     
-    showCategoryChannels('all');
-    // İlk kategoriyi aktif yap
-    const firstCategory = document.querySelector('.category-accordion[data-category="all"] .category-header');
-    if (firstCategory) {
-        firstCategory.classList.add('active');
+    if (searchTerm) {
+        clearSearch.style.display = 'flex';
+    } else {
+        clearSearch.style.display = 'none';
     }
+    
+    renderChannels();
 }
 
-// Kanal Oynat
+// Play Channel
 function playChannel(channel) {
     if (!channel || !channel.url) {
         showError('Geçersiz kanal bilgisi.');
@@ -279,15 +258,20 @@ function playChannel(channel) {
     
     currentChannel = channel;
     
-    // Son izlenen kanallara ekle
-    addToRecentChannels(channel.id);
+    // Update video info
+    currentChannelName.textContent = channel.name;
+    currentChannelCategory.textContent = channel.category;
     
-    // Önceki oynatıcıyı durdur ve temizle
+    // Show modal
+    videoModal.classList.add('active');
+    videoPlaceholder.style.display = 'flex';
+    loading.classList.add('active');
+    
+    // Stop previous playback
     videoPlayer.pause();
     videoPlayer.src = '';
     videoPlayer.load();
     
-    // Önceki HLS instance'ını temizle
     if (videoPlayer.hls) {
         videoPlayer.hls.destroy();
         videoPlayer.hls = null;
@@ -296,62 +280,26 @@ function playChannel(channel) {
     iframePlayer.src = '';
     iframePlayer.style.display = 'none';
     
-    // Loading göster (video container içinde)
-    if (loading) {
-        loading.style.display = 'flex';
-    }
-    
-    // Aktif kanalı vurgula
-    document.querySelectorAll('.channel-item').forEach(item => {
-        item.classList.remove('active');
-        const itemName = item.querySelector('.channel-name')?.textContent;
-        if (itemName === channel.name) {
-            item.classList.add('active');
-            // Aktif kanalı görünür yap
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    });
-    
-    // Video oynat
-    if (channel.type === 'm3u8') {
+    // Play video
+    if (channel.url.includes('.m3u8')) {
         playM3U8(channel.url);
-    } else if (channel.type === 'iframe') {
-        playIframe(channel.url);
     } else {
-        if (loading) loading.style.display = 'none';
-        showError('Desteklenmeyen kanal tipi.');
+        playIframe(channel.url);
     }
 }
 
-// M3U8 Oynat
+// Play M3U8
 function playM3U8(url) {
     videoPlayer.style.display = 'block';
-    videoPlayer.style.zIndex = '3';
-    videoPlayer.muted = false; // Ses açık
     iframePlayer.style.display = 'none';
-    if (videoPlaceholder) videoPlaceholder.style.display = 'none';
     
-    // HLS.js yüklenmesini bekle
+    // Check HLS.js support
     if (typeof Hls === 'undefined') {
-        let attempts = 0;
-        const maxAttempts = 100;
-        
-        const checkHls = setInterval(() => {
-            attempts++;
-            if (typeof Hls !== 'undefined') {
-                clearInterval(checkHls);
-                playM3U8(url);
-            } else if (attempts >= maxAttempts) {
-                clearInterval(checkHls);
-                if (loading) loading.style.display = 'none';
-                showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
-                videoPlaceholder.style.display = 'flex';
-            }
-        }, 100);
+        showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
+        loading.classList.remove('active');
         return;
     }
     
-    // HLS.js kullanarak M3U8 oynat
     if (Hls.isSupported()) {
         if (videoPlayer.hls) {
             videoPlayer.hls.destroy();
@@ -374,59 +322,45 @@ function playM3U8(url) {
         let manifestParsed = false;
         let timeout;
         
-        const clearTimeoutSafe = () => {
-            if (timeout) {
-                clearTimeout(timeout);
-                timeout = null;
-            }
-        };
-        
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             manifestParsed = true;
-            clearTimeoutSafe();
+            if (timeout) clearTimeout(timeout);
             videoPlayer.play().catch(err => {
-                console.error('Oynatma hatası:', err);
-                if (loading) loading.style.display = 'none';
+                console.error('Playback error:', err);
+                loading.classList.remove('active');
                 showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
-                videoPlaceholder.style.display = 'flex';
             });
-            if (loading) loading.style.display = 'none';
+            loading.classList.remove('active');
+            videoPlaceholder.style.display = 'none';
         });
         
         hls.on(Hls.Events.ERROR, (event, data) => {
-            console.error('HLS Hatası:', data);
+            console.error('HLS Error:', data);
             if (data.fatal) {
                 switch(data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        console.error('Ağ hatası, yeniden deneniyor...');
                         try {
                             hls.startLoad();
                         } catch(e) {
-                            console.error('Yeniden yükleme hatası:', e);
-                            if (loading) loading.style.display = 'none';
+                            loading.classList.remove('active');
                             hls.destroy();
                             showError('Ağ hatası. İnternet bağlantınızı kontrol edin.');
-                            videoPlaceholder.style.display = 'flex';
                         }
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.error('Medya hatası, düzeltiliyor...');
                         try {
                             hls.recoverMediaError();
                         } catch(e) {
-                            console.error('Medya hatası düzeltilemedi:', e);
-                            if (loading) loading.style.display = 'none';
+                            loading.classList.remove('active');
                             hls.destroy();
                             showError('Video çözümlenemedi. Lütfen başka bir kanal deneyin.');
-                            videoPlaceholder.style.display = 'flex';
                         }
                         break;
                     default:
-                        clearTimeoutSafe();
-                        if (loading) loading.style.display = 'none';
+                        if (timeout) clearTimeout(timeout);
+                        loading.classList.remove('active');
                         hls.destroy();
                         showError('Kanal yüklenemedi. Lütfen başka bir kanal deneyin.');
-                        videoPlaceholder.style.display = 'flex';
                         break;
                 }
             }
@@ -434,35 +368,32 @@ function playM3U8(url) {
         
         timeout = setTimeout(() => {
             if (!manifestParsed) {
-                if (loading) loading.style.display = 'none';
+                loading.classList.remove('active');
                 hls.destroy();
                 showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
-                videoPlaceholder.style.display = 'flex';
             }
         }, 15000);
         
     } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari için native HLS desteği
+        // Safari native HLS support
         videoPlayer.src = url;
         const playPromise = videoPlayer.play();
         
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                if (loading) loading.style.display = 'none';
+                loading.classList.remove('active');
+                videoPlaceholder.style.display = 'none';
             }).catch(err => {
-                console.error('Oynatma hatası:', err);
-                if (loading) loading.style.display = 'none';
+                console.error('Playback error:', err);
+                loading.classList.remove('active');
                 showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
             });
-        } else {
-            if (loading) loading.style.display = 'none';
         }
         
         const safariTimeout = setTimeout(() => {
             if (videoPlayer.readyState === 0) {
-                if (loading) loading.style.display = 'none';
+                loading.classList.remove('active');
                 showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
-                videoPlaceholder.style.display = 'flex';
             }
         }, 15000);
         
@@ -470,53 +401,78 @@ function playM3U8(url) {
             clearTimeout(safariTimeout);
         }, { once: true });
     } else {
-        if (loading) loading.style.display = 'none';
+        loading.classList.remove('active');
         showError('Tarayıcınız bu video formatını desteklemiyor.');
     }
 }
 
-// Iframe Oynat
+// Play Iframe
 function playIframe(url) {
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'block';
     iframePlayer.src = url;
-    if (loading) loading.style.display = 'none';
+    loading.classList.remove('active');
+    videoPlaceholder.style.display = 'none';
 }
 
-// Video Hatası
-function handleVideoError(e) {
-    if (loading) loading.style.display = 'none';
-    console.error('Video hatası:', e);
+// Toggle Picture-in-Picture
+async function togglePictureInPicture() {
+    try {
+        if (!document.pictureInPictureEnabled) {
+            showError('Pencere içinde pencere modu bu tarayıcıda desteklenmiyor.');
+            return;
+        }
+
+        if (document.pictureInPictureElement) {
+            // Exit PiP
+            await document.exitPictureInPicture();
+        } else {
+            // Enter PiP
+            if (videoPlayer.readyState >= 2) {
+                await videoPlayer.requestPictureInPicture();
+            } else {
+                showError('Video henüz yüklenmedi. Lütfen bekleyin.');
+            }
+        }
+    } catch (error) {
+        console.error('PiP hatası:', error);
+        if (error.name === 'NotAllowedError') {
+            showError('Pencere içinde pencere modu için izin verilmedi.');
+        } else if (error.name === 'InvalidStateError') {
+            showError('Video oynatılamıyor. Lütfen başka bir kanal deneyin.');
+        } else {
+            showError('Pencere içinde pencere modu açılamadı.');
+        }
+    }
+}
+
+// Close Video Modal
+function closeVideoModal() {
+    // Exit PiP if active
+    if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(() => {});
+    }
+    
+    videoModal.classList.remove('active');
+    
+    // Stop playback
+    videoPlayer.pause();
+    videoPlayer.src = '';
+    videoPlayer.load();
     
     if (videoPlayer.hls) {
         videoPlayer.hls.destroy();
         videoPlayer.hls = null;
     }
     
-    let errorMessage = 'Video yüklenemedi.';
+    iframePlayer.src = '';
+    iframePlayer.style.display = 'none';
     
-    if (videoPlayer.error) {
-        switch(videoPlayer.error.code) {
-            case videoPlayer.error.MEDIA_ERR_ABORTED:
-                errorMessage = 'Video yükleme iptal edildi.';
-                break;
-            case videoPlayer.error.MEDIA_ERR_NETWORK:
-                errorMessage = 'Ağ hatası. İnternet bağlantınızı kontrol edin.';
-                break;
-            case videoPlayer.error.MEDIA_ERR_DECODE:
-                errorMessage = 'Video çözümlenemedi.';
-                break;
-            case videoPlayer.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                errorMessage = 'Video formatı desteklenmiyor.';
-                break;
-        }
-    }
-    
-    showError(errorMessage + ' Lütfen başka bir kanal deneyin.');
     videoPlaceholder.style.display = 'flex';
+    loading.classList.remove('active');
 }
 
-// Hata Göster
+// Show Error
 function showError(message) {
     const errorDiv = document.createElement('div');
     errorDiv.style.cssText = `
@@ -525,157 +481,21 @@ function showError(message) {
         right: 20px;
         background: var(--danger);
         color: white;
-        padding: 15px 20px;
-        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
         z-index: 10000;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        font-size: 0.9375rem;
+        max-width: 400px;
     `;
     errorDiv.textContent = message;
     document.body.appendChild(errorDiv);
     
     setTimeout(() => {
-        errorDiv.remove();
+        errorDiv.style.opacity = '0';
+        errorDiv.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 300);
     }, 5000);
 }
-
-// Arama
-function handleSearch(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    filterAndRender(searchTerm);
-}
-
-// Filtrele ve Render
-function filterAndRender(searchTerm = '') {
-    if (searchTerm === '') {
-        // Arama yoksa mevcut kategorinin kanallarını göster
-        showCategoryChannels(currentCategory);
-        return;
-    }
-    
-    // Arama varsa tüm kanallarda ara
-    filteredChannels = channels.filter(channel => {
-        return channel.name.toLowerCase().includes(searchTerm) ||
-               getCategoryName(channel.category).toLowerCase().includes(searchTerm);
-    });
-    
-    // Arama sonuçlarını sağda göster
-    if (!channelsList) return;
-    
-    channelsList.innerHTML = '';
-    
-    if (activeCategoryName) {
-        activeCategoryName.textContent = `Arama: "${searchTerm}"`;
-    }
-    
-    if (filteredChannels.length === 0) {
-        channelsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Sonuç bulunamadı</p>';
-        return;
-    }
-    
-    filteredChannels.forEach(channel => {
-        const channelItem = document.createElement('div');
-        channelItem.className = 'channel-item';
-        const isFavorite = favoriteChannels.includes(channel.id);
-        channelItem.innerHTML = `
-            <div class="channel-icon">${channel.icon}</div>
-            <div class="channel-info">
-                <div class="channel-name">${channel.name}</div>
-            </div>
-            <button class="favorite-btn" data-channel-id="${channel.id}" title="${isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}">
-                ${isFavorite ? '⭐' : '☆'}
-            </button>
-        `;
-        
-        channelItem.addEventListener('click', (e) => {
-            if (e.target.classList.contains('favorite-btn') || e.target.closest('.favorite-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.favorite-btn');
-                const channelId = parseInt(btn.dataset.channelId);
-                toggleFavorite(channelId);
-                const isFav = favoriteChannels.includes(channelId);
-                btn.textContent = isFav ? '⭐' : '☆';
-                btn.title = isFav ? 'Favorilerden çıkar' : 'Favorilere ekle';
-            } else {
-                playChannel(channel);
-            }
-        });
-        
-        channelsList.appendChild(channelItem);
-    });
-}
-
-// Kategori Adını Al
-function getCategoryName(category) {
-    const names = {
-        'news': 'Haber',
-        'sports': 'Spor',
-        'entertainment': 'Eğlence',
-        'movie': 'Sinema',
-        'music': 'Müzik',
-        'favorites': 'Favori',
-        'recent': 'Son İzlenen'
-    };
-    return names[category] || category;
-}
-
-// Son izlenen kanallara ekle
-function addToRecentChannels(channelId) {
-    if (!recentChannels) recentChannels = [];
-    
-    // Aynı kanalı listeden çıkar (tekrar eklememek için)
-    recentChannels = recentChannels.filter(id => id !== channelId);
-    
-    // Başa ekle
-    recentChannels.unshift(channelId);
-    
-    // Maksimum 20 kanal tut
-    recentChannels = recentChannels.slice(0, 20);
-    
-    // LocalStorage'a kaydet
-    localStorage.setItem('recentChannels', JSON.stringify(recentChannels));
-}
-
-// Favori kanal ekle/çıkar
-function toggleFavorite(channelId) {
-    if (!favoriteChannels) favoriteChannels = [];
-    
-    const index = favoriteChannels.indexOf(channelId);
-    if (index > -1) {
-        favoriteChannels.splice(index, 1);
-    } else {
-        favoriteChannels.push(channelId);
-    }
-    
-    localStorage.setItem('favoriteChannels', JSON.stringify(favoriteChannels));
-    
-    // Eğer favoriler kategorisindeyse listeyi güncelle
-    if (currentCategory === 'favorites') {
-        showCategoryChannels('favorites');
-    }
-}
-
-// Tam Ekran
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        videoContainer.requestFullscreen().catch(err => {
-            console.error('Tam ekran hatası:', err);
-        });
-    } else {
-        document.exitFullscreen();
-    }
-}
-
-
-// Klavye Kısayolları
-document.addEventListener('keydown', (e) => {
-    // Space: Oynat/Duraklat
-    if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
-        e.preventDefault();
-        if (videoPlayer.paused) {
-            videoPlayer.play();
-        } else {
-            videoPlayer.pause();
-        }
-    }
-    
-});

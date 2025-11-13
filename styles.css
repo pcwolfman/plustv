@@ -606,6 +606,33 @@ body {
     font-size: 1.25rem;
 }
 
+.placeholder-content .telegram-link {
+    display: inline-block;
+    margin-top: 1.5rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--primary);
+}
+
+.placeholder-content .telegram-link:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.placeholder-content .brand-name {
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
 .loading-overlay {
     position: absolute;
     top: 0;

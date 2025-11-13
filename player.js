@@ -242,6 +242,12 @@ function playChannel(channel) {
     
     currentChannel = channel;
     
+    // Update document title and video title (hide URL)
+    document.title = `${channel.name} - PlusTV`;
+    if (videoPlayer) {
+        videoPlayer.title = channel.name;
+    }
+    
     // Update active channel in sidebar
     document.querySelectorAll('.channel-sidebar-item').forEach(item => {
         item.classList.remove('active');
@@ -288,6 +294,9 @@ function playChannel(channel) {
 function playM3U8(url) {
     videoPlayer.style.display = 'block';
     iframePlayer.style.display = 'none';
+    if (currentChannel && videoPlayer) {
+        videoPlayer.title = currentChannel.name;
+    }
     
     if (typeof Hls === 'undefined') {
         showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
@@ -434,6 +443,9 @@ function playIframe(url) {
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'block';
     iframePlayer.src = url;
+    if (currentChannel && iframePlayer) {
+        iframePlayer.title = currentChannel.name;
+    }
     loadingPlayer.classList.remove('active');
     videoPlaceholderPlayer.style.display = 'none';
 }

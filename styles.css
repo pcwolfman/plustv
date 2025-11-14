@@ -21,6 +21,37 @@
     --shadow-lg: rgba(0, 0, 0, 0.5);
 }
 
+/* Color Themes */
+:root[data-theme="red"] {
+    --primary: #ef4444;
+    --primary-dark: #dc2626;
+    --primary-light: #f87171;
+}
+
+:root[data-theme="blue"] {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+}
+
+:root[data-theme="purple"] {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+}
+
+:root[data-theme="turquoise"] {
+    --primary: #06b6d4;
+    --primary-dark: #0891b2;
+    --primary-light: #22d3ee;
+}
+
+:root[data-theme="gray"] {
+    --primary: #6b7280;
+    --primary-dark: #4b5563;
+    --primary-light: #9ca3af;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg-dark);
@@ -59,6 +90,48 @@ body {
     position: relative;
     flex-shrink: 0;
     z-index: 10;
+}
+
+.color-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.color-picker-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.color-picker-btn:hover {
+    transform: scale(1.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.color-picker-btn.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+    transform: scale(1.15);
+}
+
+.color-picker-btn.active::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .search-box {
@@ -666,6 +739,15 @@ body {
         height: 18px;
     }
 
+    .color-picker-container {
+        gap: 0.375rem;
+    }
+
+    .color-picker-btn {
+        width: 28px;
+        height: 28px;
+    }
+
     .search-box {
         max-width: 100%;
     }
@@ -748,6 +830,19 @@ body {
     .search-box input {
         padding: 0.75rem 0.875rem 0.75rem 2.5rem;
         font-size: 0.9375rem;
+    }
+
+    .color-picker-container {
+        gap: 0.25rem;
+    }
+
+    .color-picker-btn {
+        width: 24px;
+        height: 24px;
+    }
+
+    .color-picker-btn.active::after {
+        font-size: 12px;
     }
 
     .categories-section {

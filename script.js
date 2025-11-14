@@ -15,6 +15,10 @@ let viewIcon;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'purple';
+    applyTheme(savedTheme);
+    
     loadChannelsFromM3U();
     setupEventListeners();
 });
@@ -64,6 +68,16 @@ function setupEventListeners() {
             changeView(views[nextIndex]);
         });
     }
+    
+    // Color picker
+    const colorPickerBtns = document.querySelectorAll('.color-picker-btn');
+    colorPickerBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const color = btn.dataset.color;
+            applyTheme(color);
+            localStorage.setItem('theme', color);
+        });
+    });
     
     // Initialize view
     changeView(currentView, false);
@@ -312,6 +326,21 @@ function handleSearch(e) {
     renderChannels();
 }
 
+
+// Apply Theme
+function applyTheme(color) {
+    document.documentElement.setAttribute('data-theme', color);
+    
+    // Update active state
+    const colorPickerBtns = document.querySelectorAll('.color-picker-btn');
+    colorPickerBtns.forEach(btn => {
+        if (btn.dataset.color === color) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
 
 // Show Error
 function showError(message) {

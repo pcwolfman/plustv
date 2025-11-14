@@ -19,6 +19,9 @@ const loadingPlayer = document.getElementById('loadingPlayer');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'purple';
+    document.documentElement.setAttribute('data-theme', savedTheme);
     // Get channel ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const channelId = urlParams.get('id');

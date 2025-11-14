@@ -128,7 +128,7 @@ body {
 
 /* Kategoriler Bölümü */
 .categories-section {
-    padding: 1rem;
+    padding: 0.75rem 1rem 0.5rem 1rem;
     background: var(--bg-dark);
     border-bottom: 1px solid var(--border);
     position: relative;
@@ -229,7 +229,7 @@ body {
 .channels-section {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 0.75rem 1rem 2rem 1rem;
 }
 
 .channels-header {
@@ -671,7 +671,7 @@ body {
     }
 
     .categories-section {
-        padding: 0.75rem;
+        padding: 0.625rem 0.75rem 0.5rem 0.75rem;
     }
 
     .categories-container {
@@ -751,7 +751,7 @@ body {
     }
 
     .categories-section {
-        padding: 0.5rem;
+        padding: 0.5rem 0.5rem 0.375rem 0.5rem;
     }
 
     .categories-container {
@@ -787,7 +787,7 @@ body {
 /* Very small screens */
 @media (max-width: 360px) {
     .categories-section {
-        padding: 0.5rem 0.375rem;
+        padding: 0.5rem 0.375rem 0.375rem 0.375rem;
     }
 
     .categories-container {

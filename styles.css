@@ -26,54 +26,60 @@
     --primary: #ef4444;
     --primary-dark: #dc2626;
     --primary-light: #f87171;
-    --bg-dark: #1f1a1a;
-    --bg-card: #2d1f1f;
-    --bg-hover: #3d2a2a;
+    --bg-dark: #1a0f0f;
+    --bg-card: #2a1515;
+    --bg-hover: #3a1f1f;
+    --border: #3a1f1f;
 }
 
 :root[data-theme="blue"] {
     --primary: #3b82f6;
     --primary-dark: #2563eb;
     --primary-light: #60a5fa;
-    --bg-dark: #0f172a;
-    --bg-card: #1e293b;
-    --bg-hover: #334155;
+    --bg-dark: #0f141a;
+    --bg-card: #1a2333;
+    --bg-hover: #2a3344;
+    --border: #2a3344;
 }
 
 :root[data-theme="purple"] {
     --primary: #6366f1;
     --primary-dark: #4f46e5;
     --primary-light: #818cf8;
-    --bg-dark: #0f172a;
-    --bg-card: #1e293b;
-    --bg-hover: #334155;
+    --bg-dark: #0f0f1a;
+    --bg-card: #1a1a2e;
+    --bg-hover: #2a2a3e;
+    --border: #2a2a3e;
 }
 
 :root[data-theme="turquoise"] {
     --primary: #06b6d4;
     --primary-dark: #0891b2;
     --primary-light: #22d3ee;
-    --bg-dark: #0c1a1c;
-    --bg-card: #1a2d31;
-    --bg-hover: #2a3f45;
+    --bg-dark: #0a1416;
+    --bg-card: #152428;
+    --bg-hover: #253438;
+    --border: #253438;
 }
 
 :root[data-theme="gray"] {
     --primary: #6b7280;
     --primary-dark: #4b5563;
     --primary-light: #9ca3af;
-    --bg-dark: #0f172a;
-    --bg-card: #1e293b;
-    --bg-hover: #334155;
+    --bg-dark: #0f0f0f;
+    --bg-card: #1a1a1a;
+    --bg-hover: #2a2a2a;
+    --border: #2a2a2a;
 }
 
 :root[data-theme="brown"] {
     --primary: #a16207;
     --primary-dark: #854d0e;
     --primary-light: #ca8a04;
-    --bg-dark: #1c1917;
-    --bg-card: #292524;
-    --bg-hover: #3f3a37;
+    --bg-dark: #1a140f;
+    --bg-card: #2a1f15;
+    --bg-hover: #3a2f25;
+    --border: #3a2f25;
 }
 
 body {

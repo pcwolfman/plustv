@@ -6,13 +6,13 @@ let currentView = localStorage.getItem('channelView') || 'list'; // 'large', 'sm
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
 const clearSearch = document.getElementById('clearSearch');
+const voiceSearchBtn = document.getElementById('voiceSearchBtn');
 const categoryCards = document.querySelectorAll('.category-card');
 const channelsGrid = document.getElementById('channelsGrid');
 const categoryTitle = document.getElementById('categoryTitle');
 const channelCount = document.getElementById('channelCount');
 const viewMenuBtn = document.getElementById('viewMenuBtn');
-const viewMenuDropdown = document.getElementById('viewMenuDropdown');
-const viewOptions = document.querySelectorAll('.view-option');
+const viewIcon = document.getElementById('viewIcon');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,6 +30,11 @@ function setupEventListeners() {
         handleSearch({ target: searchInput });
     });
 
+    // Voice Search
+    if (voiceSearchBtn) {
+        voiceSearchBtn.addEventListener('click', toggleVoiceSearch);
+    }
+
     // Category selection
     categoryCards.forEach(card => {
         card.addEventListener('click', () => {
@@ -38,29 +43,16 @@ function setupEventListeners() {
         });
     });
 
-    // View menu toggle
+    // View toggle - cycle through views
     if (viewMenuBtn) {
-        viewMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            viewMenuDropdown.classList.toggle('active');
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!viewMenuBtn.contains(e.target) && !viewMenuDropdown.contains(e.target)) {
-                viewMenuDropdown.classList.remove('active');
-            }
+        viewMenuBtn.addEventListener('click', () => {
+            // Cycle: list -> large -> small -> list
+            const views = ['list', 'large', 'small'];
+            const currentIndex = views.indexOf(currentView);
+            const nextIndex = (currentIndex + 1) % views.length;
+            changeView(views[nextIndex]);
         });
     }
-    
-    // View option selection
-    viewOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            const view = option.dataset.view;
-            changeView(view);
-            viewMenuDropdown.classList.remove('active');
-        });
-    });
     
     // Initialize view
     changeView(currentView, false);
@@ -246,13 +238,27 @@ function changeView(view, save = true) {
         localStorage.setItem('channelView', view);
     }
     
-    // Update active state
-    viewOptions.forEach(option => {
-        option.classList.remove('active');
-        if (option.dataset.view === view) {
-            option.classList.add('active');
+    // Update icon based on view
+    if (viewIcon) {
+        let iconSvg = '';
+        let title = '';
+        
+        if (view === 'large') {
+            iconSvg = '<rect x="3" y="3" width="18" height="18" rx="2"></rect>';
+            title = 'Büyük Kart';
+        } else if (view === 'small') {
+            iconSvg = '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect>';
+            title = 'Küçük Kart';
+        } else { // list
+            iconSvg = '<line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>';
+            title = 'Liste';
         }
-    });
+        
+        viewIcon.innerHTML = iconSvg;
+        if (viewMenuBtn) {
+            viewMenuBtn.title = title;
+        }
+    }
     
     // Update grid class
     channelsGrid.className = 'channels-grid';
@@ -273,6 +279,84 @@ function handleSearch(e) {
     }
     
     renderChannels();
+}
+
+// Voice Search
+let recognition = null;
+let isListening = false;
+
+// Check if browser supports speech recognition
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'tr-TR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+        isListening = true;
+        if (voiceSearchBtn) {
+            voiceSearchBtn.classList.add('listening');
+            voiceSearchBtn.title = 'Dinleniyor...';
+        }
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        searchInput.value = transcript;
+        handleSearch({ target: searchInput });
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Sesli arama hatası:', event.error);
+        if (event.error === 'no-speech') {
+            showError('Ses algılanamadı. Lütfen tekrar deneyin.');
+        } else if (event.error === 'not-allowed') {
+            showError('Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.');
+        } else {
+            showError('Sesli arama hatası: ' + event.error);
+        }
+        stopVoiceSearch();
+    };
+
+    recognition.onend = () => {
+        stopVoiceSearch();
+    };
+} else {
+    // Browser doesn't support speech recognition
+    if (voiceSearchBtn) {
+        voiceSearchBtn.style.display = 'none';
+    }
+}
+
+function toggleVoiceSearch() {
+    if (!recognition) {
+        showError('Tarayıcınız sesli aramayı desteklemiyor.');
+        return;
+    }
+
+    if (isListening) {
+        recognition.stop();
+        stopVoiceSearch();
+    } else {
+        try {
+            recognition.start();
+        } catch (error) {
+            console.error('Sesli arama başlatılamadı:', error);
+            showError('Sesli arama başlatılamadı. Lütfen tekrar deneyin.');
+        }
+    }
+}
+
+function stopVoiceSearch() {
+    isListening = false;
+    if (voiceSearchBtn) {
+        voiceSearchBtn.classList.remove('listening');
+        voiceSearchBtn.title = 'Sesli Arama';
+    }
+    if (recognition && recognition.state !== 'inactive') {
+        recognition.stop();
+    }
 }
 
 // Show Error

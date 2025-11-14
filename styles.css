@@ -80,7 +80,7 @@ body {
 
 .search-box input {
     width: 100%;
-    padding: 0.875rem 1rem 0.875rem 3rem;
+    padding: 0.875rem 3.5rem 0.875rem 3rem;
     background: var(--bg-dark);
     border: 2px solid var(--border);
     border-radius: 12px;
@@ -101,6 +101,58 @@ body {
     color: var(--text-muted);
 }
 
+.voice-search-btn {
+    position: absolute;
+    right: 3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.voice-search-btn:hover {
+    background: var(--bg-hover);
+    color: var(--primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.voice-search-btn.listening {
+    color: var(--danger);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.voice-search-btn.listening svg {
+    animation: pulse-icon 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        background: transparent;
+    }
+    50% {
+        background: rgba(239, 68, 68, 0.2);
+    }
+}
+
+@keyframes pulse-icon {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
 .clear-search {
     position: absolute;
     right: 1rem;
@@ -118,6 +170,7 @@ body {
     justify-content: center;
     border-radius: 50%;
     transition: all 0.2s ease;
+    z-index: 2;
 }
 
 .clear-search:hover {
@@ -161,65 +214,6 @@ body {
     stroke: currentColor;
 }
 
-.view-menu-dropdown {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    left: 0;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px var(--shadow-lg);
-    min-width: 180px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-    z-index: 100;
-    overflow: hidden;
-}
-
-.view-menu-dropdown.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.view-option {
-    width: 100%;
-    padding: 0.875rem 1rem;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    text-align: left;
-}
-
-.view-option:hover {
-    background: var(--bg-hover);
-}
-
-.view-option.active {
-    background: rgba(99, 102, 241, 0.15);
-    color: var(--primary);
-}
-
-.view-option svg {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-    flex-shrink: 0;
-}
-
-.view-option span {
-    flex: 1;
-}
 
 .categories-container {
     max-width: 1400px;
@@ -813,8 +807,19 @@ body {
 
 @media (max-width: 480px) {
     .search-box input {
-        padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+        padding: 0.75rem 3rem 0.75rem 2.5rem;
         font-size: 0.9375rem;
+    }
+
+    .voice-search-btn {
+        right: 2.5rem;
+        width: 28px;
+        height: 28px;
+    }
+
+    .voice-search-btn svg {
+        width: 16px;
+        height: 16px;
     }
 
     .categories-section {

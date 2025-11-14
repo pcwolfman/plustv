@@ -4,15 +4,15 @@ let currentCategory = 'all';
 let currentView = localStorage.getItem('channelView') || 'list'; // 'large', 'small', 'list'
 
 // DOM Elements
-const searchInput = document.getElementById('searchInput');
-const clearSearch = document.getElementById('clearSearch');
-const voiceSearchBtn = document.getElementById('voiceSearchBtn');
-const categoryCards = document.querySelectorAll('.category-card');
-const channelsGrid = document.getElementById('channelsGrid');
-const categoryTitle = document.getElementById('categoryTitle');
-const channelCount = document.getElementById('channelCount');
-const viewMenuBtn = document.getElementById('viewMenuBtn');
-const viewIcon = document.getElementById('viewIcon');
+let searchInput;
+let clearSearch;
+let voiceSearchBtn;
+let categoryCards;
+let channelsGrid;
+let categoryTitle;
+let channelCount;
+let viewMenuBtn;
+let viewIcon;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,13 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Event Listeners
 function setupEventListeners() {
+    // Get DOM elements
+    searchInput = document.getElementById('searchInput');
+    clearSearch = document.getElementById('clearSearch');
+    voiceSearchBtn = document.getElementById('voiceSearchBtn');
+    categoryCards = document.querySelectorAll('.category-card');
+    channelsGrid = document.getElementById('channelsGrid');
+    categoryTitle = document.getElementById('categoryTitle');
+    channelCount = document.getElementById('channelCount');
+    viewMenuBtn = document.getElementById('viewMenuBtn');
+    viewIcon = document.getElementById('viewIcon');
+    
     // Search
-    searchInput.addEventListener('input', handleSearch);
-    clearSearch.addEventListener('click', () => {
-        searchInput.value = '';
-        clearSearch.style.display = 'none';
-        handleSearch({ target: searchInput });
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
+    }
+    
+    if (clearSearch) {
+        clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearch.style.display = 'none';
+            handleSearch({ target: searchInput });
+        });
+    }
 
     // Voice Search
     if (voiceSearchBtn) {
@@ -46,12 +62,14 @@ function setupEventListeners() {
     }
 
     // Category selection
-    categoryCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const category = card.dataset.category;
-            selectCategory(category);
+    if (categoryCards && categoryCards.length > 0) {
+        categoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const category = card.dataset.category;
+                selectCategory(category);
+            });
         });
-    });
+    }
 
     // View toggle - cycle through views
     if (viewMenuBtn) {
@@ -135,16 +153,22 @@ function selectCategory(category) {
     currentCategory = category;
     
     // Update active category
-    categoryCards.forEach(card => {
-        card.classList.remove('active');
-        if (card.dataset.category === category) {
-            card.classList.add('active');
-        }
-    });
+    if (categoryCards && categoryCards.length > 0) {
+        categoryCards.forEach(card => {
+            card.classList.remove('active');
+            if (card.dataset.category === category) {
+                card.classList.add('active');
+            }
+        });
+    }
     
     // Clear search
-    searchInput.value = '';
-    clearSearch.style.display = 'none';
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    if (clearSearch) {
+        clearSearch.style.display = 'none';
+    }
     
     // Render channels
     renderChannels();
@@ -160,7 +184,7 @@ function renderChannels() {
     }
     
     // Filter by search
-    const searchTerm = searchInput.value.toLowerCase().trim();
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     if (searchTerm) {
         filteredChannels = filteredChannels.filter(ch => 
             ch.name.toLowerCase().includes(searchTerm)
@@ -183,21 +207,29 @@ function renderChannels() {
         'Radyo Canlı': 'Radyo Canlı'
     };
     
-    categoryTitle.textContent = searchTerm 
-        ? `Arama: "${searchTerm}"` 
-        : (categoryNames[currentCategory] || 'Kanallar');
-    channelCount.textContent = `${filteredChannels.length} kanal`;
+    if (categoryTitle) {
+        categoryTitle.textContent = searchTerm 
+            ? `Arama: "${searchTerm}"` 
+            : (categoryNames[currentCategory] || 'Kanallar');
+    }
+    if (channelCount) {
+        channelCount.textContent = `${filteredChannels.length} kanal`;
+    }
     
     // Clear grid
-    channelsGrid.innerHTML = '';
+    if (channelsGrid) {
+        channelsGrid.innerHTML = '';
+    }
     
     if (filteredChannels.length === 0) {
-        channelsGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-                <p>Kanal bulunamadı</p>
-            </div>
-        `;
+        if (channelsGrid) {
+            channelsGrid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                    <p>Kanal bulunamadı</p>
+                </div>
+            `;
+        }
         return;
     }
     
@@ -236,7 +268,9 @@ function renderChannels() {
             window.location.href = `player.html?id=${channel.id}&category=${encodeURIComponent(currentCategory)}`;
         });
         
-        channelsGrid.appendChild(channelCard);
+        if (channelsGrid) {
+            channelsGrid.appendChild(channelCard);
+        }
     });
 }
 
@@ -271,8 +305,10 @@ function changeView(view, save = true) {
     }
     
     // Update grid class
-    channelsGrid.className = 'channels-grid';
-    channelsGrid.classList.add(`view-${view}`);
+    if (channelsGrid) {
+        channelsGrid.className = 'channels-grid';
+        channelsGrid.classList.add(`view-${view}`);
+    }
     
     // Re-render channels
     renderChannels();
@@ -282,10 +318,12 @@ function changeView(view, save = true) {
 function handleSearch(e) {
     const searchTerm = e.target.value.toLowerCase().trim();
     
-    if (searchTerm) {
-        clearSearch.style.display = 'flex';
-    } else {
-        clearSearch.style.display = 'none';
+    if (clearSearch) {
+        if (searchTerm) {
+            clearSearch.style.display = 'flex';
+        } else {
+            clearSearch.style.display = 'none';
+        }
     }
     
     renderChannels();
@@ -340,8 +378,10 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
     recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        searchInput.value = transcript;
-        handleSearch({ target: searchInput });
+        if (searchInput) {
+            searchInput.value = transcript;
+            handleSearch({ target: searchInput });
+        }
     };
 
     recognition.onerror = (event) => {

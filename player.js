@@ -80,9 +80,8 @@ function setupEventListeners() {
     }
     
     // Fullscreen on double tap (mobile/touch devices)
+    // Only add to container, not video/iframe to avoid conflicts with video controls
     setupDoubleTapFullscreen(videoContainerPlayer);
-    setupDoubleTapFullscreen(videoPlayer);
-    setupDoubleTapFullscreen(iframePlayer);
     
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -456,26 +455,55 @@ function setupDoubleTapFullscreen(element) {
     
     let lastTap = 0;
     let tapTimeout;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    element.addEventListener('touchstart', function(e) {
+        // Store touch start position
+        if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+    }, { passive: true });
     
     element.addEventListener('touchend', function(e) {
+        // Only handle single finger taps
+        if (e.changedTouches.length !== 1) return;
+        
+        const touch = e.changedTouches[0];
+        const touchEndX = touch.clientX;
+        const touchEndY = touch.clientY;
+        
+        // Check if it's a tap (not a swipe) - movement should be less than 10px
+        const deltaX = Math.abs(touchEndX - touchStartX);
+        const deltaY = Math.abs(touchEndY - touchStartY);
+        
+        if (deltaX > 10 || deltaY > 10) {
+            // It's a swipe, not a tap - ignore
+            lastTap = 0;
+            return;
+        }
+        
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
         
         clearTimeout(tapTimeout);
         
-        if (tapLength < 300 && tapLength > 0) {
+        if (tapLength < 400 && tapLength > 0) {
             // Double tap detected
             e.preventDefault();
+            e.stopPropagation();
             toggleFullscreen();
+            lastTap = 0; // Reset to prevent triple tap
         } else {
             // Single tap - wait to see if there's another tap
             tapTimeout = setTimeout(() => {
                 // Single tap confirmed, do nothing
-            }, 300);
+            }, 400);
         }
         
         lastTap = currentTime;
-    });
+    }, { passive: false });
 }
 
 // Toggle Fullscreen

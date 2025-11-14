@@ -65,12 +65,12 @@ function setupEventListeners() {
         });
     }
     
-    // Fullscreen on double click
+    // Fullscreen on double click (desktop)
     if (videoContainerPlayer) {
         videoContainerPlayer.addEventListener('dblclick', toggleFullscreen);
     }
     
-    // Also allow double click on video/iframe
+    // Also allow double click on video/iframe (desktop)
     if (videoPlayer) {
         videoPlayer.addEventListener('dblclick', toggleFullscreen);
     }
@@ -78,6 +78,11 @@ function setupEventListeners() {
     if (iframePlayer) {
         iframePlayer.addEventListener('dblclick', toggleFullscreen);
     }
+    
+    // Fullscreen on double tap (mobile/touch devices)
+    setupDoubleTapFullscreen(videoContainerPlayer);
+    setupDoubleTapFullscreen(videoPlayer);
+    setupDoubleTapFullscreen(iframePlayer);
     
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -443,6 +448,34 @@ function playIframe(url) {
     }
     loadingPlayer.classList.remove('active');
     videoPlaceholderPlayer.style.display = 'none';
+}
+
+// Setup double tap for fullscreen (mobile)
+function setupDoubleTapFullscreen(element) {
+    if (!element) return;
+    
+    let lastTap = 0;
+    let tapTimeout;
+    
+    element.addEventListener('touchend', function(e) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        clearTimeout(tapTimeout);
+        
+        if (tapLength < 300 && tapLength > 0) {
+            // Double tap detected
+            e.preventDefault();
+            toggleFullscreen();
+        } else {
+            // Single tap - wait to see if there's another tap
+            tapTimeout = setTimeout(() => {
+                // Single tap confirmed, do nothing
+            }, 300);
+        }
+        
+        lastTap = currentTime;
+    });
 }
 
 // Toggle Fullscreen

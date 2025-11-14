@@ -1141,46 +1141,6 @@ body {
     z-index: 1;
 }
 
-.fullscreen-btn-top {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background: rgba(0, 0, 0, 0.7);
-    border: none;
-    color: white;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
-    padding: 0;
-    z-index: 10;
-    opacity: 1;
-}
-
-.fullscreen-btn-top svg {
-    width: 20px;
-    height: 20px;
-    stroke: currentColor;
-}
-
-.fullscreen-btn-top:hover {
-    background: rgba(99, 102, 241, 0.9);
-    transform: scale(1.05);
-}
-
-.fullscreen-btn-top:active {
-    transform: scale(0.95);
-}
-
-.fullscreen-btn-top.active {
-    background: rgba(99, 102, 241, 0.9);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-}
 
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -1224,17 +1184,6 @@ body {
         height: 60vh;
     }
     
-    .fullscreen-btn-top {
-        width: 40px;
-        height: 40px;
-        top: 0.75rem;
-        left: 0.75rem;
-    }
-    
-    .fullscreen-btn-top svg {
-        width: 18px;
-        height: 18px;
-    }
     
     .channel-sidebar-logo,
     .channel-sidebar-logo-placeholder {

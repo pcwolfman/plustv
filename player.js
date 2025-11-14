@@ -16,8 +16,6 @@ const iframePlayer = document.getElementById('iframePlayer');
 const videoContainerPlayer = document.getElementById('videoContainerPlayer');
 const videoPlaceholderPlayer = document.getElementById('videoPlaceholderPlayer');
 const loadingPlayer = document.getElementById('loadingPlayer');
-const fullscreenBtn = document.getElementById('fullscreenBtn');
-const fullscreenIcon = document.getElementById('fullscreenIcon');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -67,16 +65,18 @@ function setupEventListeners() {
         });
     }
     
-    // Fullscreen
-    if (fullscreenBtn) {
-        fullscreenBtn.style.display = 'flex';
-        fullscreenBtn.addEventListener('click', toggleFullscreen);
-        
-        // Listen for fullscreen changes
-        document.addEventListener('fullscreenchange', updateFullscreenIcon);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
-        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
-        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+    // Fullscreen on double click
+    if (videoContainerPlayer) {
+        videoContainerPlayer.addEventListener('dblclick', toggleFullscreen);
+    }
+    
+    // Also allow double click on video/iframe
+    if (videoPlayer) {
+        videoPlayer.addEventListener('dblclick', toggleFullscreen);
+    }
+    
+    if (iframePlayer) {
+        iframePlayer.addEventListener('dblclick', toggleFullscreen);
     }
     
     // Keyboard shortcuts
@@ -482,27 +482,6 @@ function toggleFullscreen() {
     }
 }
 
-// Update fullscreen icon
-function updateFullscreenIcon() {
-    const isFullscreen = !!(document.fullscreenElement || 
-                           document.webkitFullscreenElement || 
-                           document.mozFullScreenElement || 
-                           document.msFullscreenElement);
-    
-    if (fullscreenBtn && fullscreenIcon) {
-        if (isFullscreen) {
-            fullscreenBtn.classList.add('active');
-            fullscreenBtn.title = 'Tam Ekrandan Çık';
-            // Exit fullscreen icon
-            fullscreenIcon.innerHTML = '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>';
-        } else {
-            fullscreenBtn.classList.remove('active');
-            fullscreenBtn.title = 'Tam Ekran';
-            // Enter fullscreen icon
-            fullscreenIcon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
-        }
-    }
-}
 
 // Toggle Favorite
 function toggleFavorite(channelId) {

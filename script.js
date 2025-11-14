@@ -18,6 +18,16 @@ const viewIcon = document.getElementById('viewIcon');
 document.addEventListener('DOMContentLoaded', () => {
     loadChannelsFromM3U();
     setupEventListeners();
+    
+    // Request microphone permission on first user interaction
+    if (voiceSearchBtn && recognition) {
+        // Pre-request permission when user first interacts with the page
+        document.addEventListener('click', async () => {
+            if (!microphonePermissionGranted) {
+                await requestMicrophonePermission();
+            }
+        }, { once: true });
+    }
 });
 
 // Event Listeners
@@ -284,6 +294,33 @@ function handleSearch(e) {
 // Voice Search
 let recognition = null;
 let isListening = false;
+let microphonePermissionGranted = false;
+
+// Request microphone permission
+async function requestMicrophonePermission() {
+    if (microphonePermissionGranted) {
+        return true;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Permission granted, stop the stream immediately
+        stream.getTracks().forEach(track => track.stop());
+        microphonePermissionGranted = true;
+        console.log('✅ Mikrofon izni verildi');
+        return true;
+    } catch (error) {
+        console.error('Mikrofon izni hatası:', error);
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            showError('Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.');
+        } else if (error.name === 'NotFoundError') {
+            showError('Mikrofon bulunamadı.');
+        } else {
+            showError('Mikrofon erişimi sağlanamadı.');
+        }
+        return false;
+    }
+}
 
 // Check if browser supports speech recognition
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -313,6 +350,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             showError('Ses algılanamadı. Lütfen tekrar deneyin.');
         } else if (event.error === 'not-allowed') {
             showError('Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.');
+            microphonePermissionGranted = false;
         } else {
             showError('Sesli arama hatası: ' + event.error);
         }
@@ -329,7 +367,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     }
 }
 
-function toggleVoiceSearch() {
+async function toggleVoiceSearch() {
     if (!recognition) {
         showError('Tarayıcınız sesli aramayı desteklemiyor.');
         return;
@@ -339,11 +377,30 @@ function toggleVoiceSearch() {
         recognition.stop();
         stopVoiceSearch();
     } else {
+        // Request microphone permission first
+        const hasPermission = await requestMicrophonePermission();
+        if (!hasPermission) {
+            return;
+        }
+
         try {
             recognition.start();
         } catch (error) {
             console.error('Sesli arama başlatılamadı:', error);
-            showError('Sesli arama başlatılamadı. Lütfen tekrar deneyin.');
+            // If start fails, try requesting permission again
+            if (error.name === 'NotAllowedError' || error.message.includes('not-allowed')) {
+                microphonePermissionGranted = false;
+                const hasPermission = await requestMicrophonePermission();
+                if (hasPermission) {
+                    try {
+                        recognition.start();
+                    } catch (retryError) {
+                        showError('Sesli arama başlatılamadı. Lütfen tekrar deneyin.');
+                    }
+                }
+            } else {
+                showError('Sesli arama başlatılamadı. Lütfen tekrar deneyin.');
+            }
         }
     }
 }

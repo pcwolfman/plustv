@@ -6,7 +6,6 @@ let currentView = localStorage.getItem('channelView') || 'list'; // 'large', 'sm
 // DOM Elements
 let searchInput;
 let clearSearch;
-let voiceSearchBtn;
 let categoryCards;
 let channelsGrid;
 let categoryTitle;
@@ -18,16 +17,6 @@ let viewIcon;
 document.addEventListener('DOMContentLoaded', () => {
     loadChannelsFromM3U();
     setupEventListeners();
-    
-    // Request microphone permission on first user interaction
-    if (voiceSearchBtn && recognition) {
-        // Pre-request permission when user first interacts with the page
-        document.addEventListener('click', async () => {
-            if (!microphonePermissionGranted) {
-                await requestMicrophonePermission();
-            }
-        }, { once: true });
-    }
 });
 
 // Event Listeners
@@ -35,7 +24,6 @@ function setupEventListeners() {
     // Get DOM elements
     searchInput = document.getElementById('searchInput');
     clearSearch = document.getElementById('clearSearch');
-    voiceSearchBtn = document.getElementById('voiceSearchBtn');
     categoryCards = document.querySelectorAll('.category-card');
     channelsGrid = document.getElementById('channelsGrid');
     categoryTitle = document.getElementById('categoryTitle');
@@ -54,11 +42,6 @@ function setupEventListeners() {
             clearSearch.style.display = 'none';
             handleSearch({ target: searchInput });
         });
-    }
-
-    // Voice Search
-    if (voiceSearchBtn) {
-        voiceSearchBtn.addEventListener('click', toggleVoiceSearch);
     }
 
     // Category selection
@@ -329,132 +312,6 @@ function handleSearch(e) {
     renderChannels();
 }
 
-// Voice Search
-let recognition = null;
-let isListening = false;
-let microphonePermissionGranted = false;
-
-// Request microphone permission
-async function requestMicrophonePermission() {
-    if (microphonePermissionGranted) {
-        return true;
-    }
-
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Permission granted, stop the stream immediately
-        stream.getTracks().forEach(track => track.stop());
-        microphonePermissionGranted = true;
-        console.log('✅ Mikrofon izni verildi');
-        return true;
-    } catch (error) {
-        console.error('Mikrofon izni hatası:', error);
-        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-            showError('Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.');
-        } else if (error.name === 'NotFoundError') {
-            showError('Mikrofon bulunamadı.');
-        } else {
-            showError('Mikrofon erişimi sağlanamadı.');
-        }
-        return false;
-    }
-}
-
-// Check if browser supports speech recognition
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'tr-TR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-        isListening = true;
-        if (voiceSearchBtn) {
-            voiceSearchBtn.classList.add('listening');
-            voiceSearchBtn.title = 'Dinleniyor...';
-        }
-    };
-
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (searchInput) {
-            searchInput.value = transcript;
-            handleSearch({ target: searchInput });
-        }
-    };
-
-    recognition.onerror = (event) => {
-        console.error('Sesli arama hatası:', event.error);
-        if (event.error === 'no-speech') {
-            showError('Ses algılanamadı. Lütfen tekrar deneyin.');
-        } else if (event.error === 'not-allowed') {
-            showError('Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından izin verin.');
-            microphonePermissionGranted = false;
-        } else {
-            showError('Sesli arama hatası: ' + event.error);
-        }
-        stopVoiceSearch();
-    };
-
-    recognition.onend = () => {
-        stopVoiceSearch();
-    };
-} else {
-    // Browser doesn't support speech recognition
-    if (voiceSearchBtn) {
-        voiceSearchBtn.style.display = 'none';
-    }
-}
-
-async function toggleVoiceSearch() {
-    if (!recognition) {
-        showError('Tarayıcınız sesli aramayı desteklemiyor.');
-        return;
-    }
-
-    if (isListening) {
-        recognition.stop();
-        stopVoiceSearch();
-    } else {
-        // Request microphone permission first
-        const hasPermission = await requestMicrophonePermission();
-        if (!hasPermission) {
-            return;
-        }
-
-        try {
-            recognition.start();
-        } catch (error) {
-            console.error('Sesli arama başlatılamadı:', error);
-            // If start fails, try requesting permission again
-            if (error.name === 'NotAllowedError' || error.message.includes('not-allowed')) {
-                microphonePermissionGranted = false;
-                const hasPermission = await requestMicrophonePermission();
-                if (hasPermission) {
-                    try {
-                        recognition.start();
-                    } catch (retryError) {
-                        showError('Sesli arama başlatılamadı. Lütfen tekrar deneyin.');
-                    }
-                }
-            } else {
-                showError('Sesli arama başlatılamadı. Lütfen tekrar deneyin.');
-            }
-        }
-    }
-}
-
-function stopVoiceSearch() {
-    isListening = false;
-    if (voiceSearchBtn) {
-        voiceSearchBtn.classList.remove('listening');
-        voiceSearchBtn.title = 'Sesli Arama';
-    }
-    if (recognition && recognition.state !== 'inactive') {
-        recognition.stop();
-    }
-}
 
 // Show Error
 function showError(message) {

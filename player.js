@@ -16,7 +16,8 @@ const iframePlayer = document.getElementById('iframePlayer');
 const videoContainerPlayer = document.getElementById('videoContainerPlayer');
 const videoPlaceholderPlayer = document.getElementById('videoPlaceholderPlayer');
 const loadingPlayer = document.getElementById('loadingPlayer');
-const pipBtn = document.getElementById('pipBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const fullscreenIcon = document.getElementById('fullscreenIcon');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,22 +67,16 @@ function setupEventListeners() {
         });
     }
     
-    // Picture-in-Picture
-    if (pipBtn) {
-        pipBtn.style.display = 'flex';
-        pipBtn.addEventListener('click', togglePictureInPicture);
+    // Fullscreen
+    if (fullscreenBtn) {
+        fullscreenBtn.style.display = 'flex';
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
         
-        if (document.pictureInPictureEnabled && videoPlayer.disablePictureInPicture !== true) {
-            videoPlayer.addEventListener('enterpictureinpicture', () => {
-                pipBtn.classList.add('active');
-                pipBtn.title = 'Pencere İçinde Pencere Modundan Çık';
-            });
-            
-            videoPlayer.addEventListener('leavepictureinpicture', () => {
-                pipBtn.classList.remove('active');
-                pipBtn.title = 'Pencere İçinde Pencere';
-            });
-        }
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
     }
     
     // Keyboard shortcuts
@@ -450,31 +445,61 @@ function playIframe(url) {
     videoPlaceholderPlayer.style.display = 'none';
 }
 
-// Toggle Picture-in-Picture
-async function togglePictureInPicture() {
+// Toggle Fullscreen
+function toggleFullscreen() {
+    const container = videoContainerPlayer;
+    
     try {
-        if (!document.pictureInPictureEnabled) {
-            showError('Pencere içinde pencere modu bu tarayıcıda desteklenmiyor.');
-            return;
-        }
-
-        if (document.pictureInPictureElement) {
-            await document.exitPictureInPicture();
+        if (!document.fullscreenElement && 
+            !document.webkitFullscreenElement && 
+            !document.mozFullScreenElement && 
+            !document.msFullscreenElement) {
+            // Enter fullscreen
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            } else if (container.mozRequestFullScreen) {
+                container.mozRequestFullScreen();
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen();
+            }
         } else {
-            if (videoPlayer.readyState >= 2) {
-                await videoPlayer.requestPictureInPicture();
-            } else {
-                showError('Video henüz yüklenmedi. Lütfen bekleyin.');
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
             }
         }
     } catch (error) {
-        console.error('PiP hatası:', error);
-        if (error.name === 'NotAllowedError') {
-            showError('Pencere içinde pencere modu için izin verilmedi.');
-        } else if (error.name === 'InvalidStateError') {
-            showError('Video oynatılamıyor. Lütfen başka bir kanal deneyin.');
+        console.error('Tam ekran hatası:', error);
+        showError('Tam ekran modu açılamadı.');
+    }
+}
+
+// Update fullscreen icon
+function updateFullscreenIcon() {
+    const isFullscreen = !!(document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement);
+    
+    if (fullscreenBtn && fullscreenIcon) {
+        if (isFullscreen) {
+            fullscreenBtn.classList.add('active');
+            fullscreenBtn.title = 'Tam Ekrandan Çık';
+            // Exit fullscreen icon
+            fullscreenIcon.innerHTML = '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>';
         } else {
-            showError('Pencere içinde pencere modu açılamadı.');
+            fullscreenBtn.classList.remove('active');
+            fullscreenBtn.title = 'Tam Ekran';
+            // Enter fullscreen icon
+            fullscreenIcon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
         }
     }
 }

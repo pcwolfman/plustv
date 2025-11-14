@@ -790,15 +790,6 @@ body {
         font-size: 0.875rem;
     }
 
-    .pip-btn {
-        width: 36px;
-        height: 44px;
-    }
-
-    .pip-btn svg {
-        width: 18px;
-        height: 18px;
-    }
 
     .channels-header h2 {
         font-size: 1.25rem;
@@ -1150,7 +1141,7 @@ body {
     z-index: 1;
 }
 
-.pip-btn-top {
+.fullscreen-btn-top {
     position: absolute;
     top: 1rem;
     left: 1rem;
@@ -1171,22 +1162,22 @@ body {
     opacity: 1;
 }
 
-.pip-btn-top svg {
+.fullscreen-btn-top svg {
     width: 20px;
     height: 20px;
     stroke: currentColor;
 }
 
-.pip-btn-top:hover {
+.fullscreen-btn-top:hover {
     background: rgba(99, 102, 241, 0.9);
     transform: scale(1.05);
 }
 
-.pip-btn-top:active {
+.fullscreen-btn-top:active {
     transform: scale(0.95);
 }
 
-.pip-btn-top.active {
+.fullscreen-btn-top.active {
     background: rgba(99, 102, 241, 0.9);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
 }
@@ -1233,14 +1224,14 @@ body {
         height: 60vh;
     }
     
-    .pip-btn-top {
+    .fullscreen-btn-top {
         width: 40px;
         height: 40px;
         top: 0.75rem;
         left: 0.75rem;
     }
     
-    .pip-btn-top svg {
+    .fullscreen-btn-top svg {
         width: 18px;
         height: 18px;
     }

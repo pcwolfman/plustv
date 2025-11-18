@@ -4,6 +4,8 @@ let currentChannel = null;
 let currentCategory = 'all';
 let favoriteChannels = JSON.parse(localStorage.getItem('favoriteChannels') || '[]');
 let activeTab = 'channels';
+let activeTimeouts = []; // Track all timeouts for cleanup
+let hlsInstance = null; // Track HLS instance
 
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
@@ -44,22 +46,104 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+// Cleanup function
+function cleanup() {
+    // Clear all timeouts
+    activeTimeouts.forEach(timeout => {
+        try {
+            clearTimeout(timeout);
+        } catch (e) {
+            console.warn('Timeout cleanup error:', e);
+        }
+    });
+    activeTimeouts = [];
+    
+    // Destroy HLS instance
+    if (hlsInstance) {
+        try {
+            hlsInstance.destroy();
+        } catch (e) {
+            console.warn('HLS cleanup error:', e);
+        }
+        hlsInstance = null;
+    }
+    
+    if (videoPlayer && videoPlayer.hls) {
+        try {
+            videoPlayer.hls.destroy();
+            videoPlayer.hls = null;
+        } catch (e) {
+            console.warn('Video player HLS cleanup error:', e);
+        }
+    }
+    
+    // Stop video
+    if (videoPlayer) {
+        try {
+            videoPlayer.pause();
+            videoPlayer.src = '';
+            videoPlayer.load();
+        } catch (e) {
+            console.warn('Video player cleanup error:', e);
+        }
+    }
+    
+    if (iframePlayer) {
+        try {
+            iframePlayer.src = '';
+        } catch (e) {
+            console.warn('Iframe cleanup error:', e);
+        }
+    }
+    
+    // Remove touch event handlers if they exist
+    if (videoContainerPlayer && videoContainerPlayer._touchStartHandler) {
+        try {
+            videoContainerPlayer.removeEventListener('touchstart', videoContainerPlayer._touchStartHandler);
+            videoContainerPlayer.removeEventListener('touchend', videoContainerPlayer._touchEndHandler);
+            delete videoContainerPlayer._touchStartHandler;
+            delete videoContainerPlayer._touchEndHandler;
+        } catch (e) {
+            console.warn('Touch handler cleanup error:', e);
+        }
+    }
+}
+
+// Safe timeout wrapper
+function safeSetTimeout(callback, delay) {
+    const timeout = setTimeout(() => {
+        activeTimeouts = activeTimeouts.filter(t => t !== timeout);
+        callback();
+    }, delay);
+    activeTimeouts.push(timeout);
+    return timeout;
+}
+
 // Event Listeners
 function setupEventListeners() {
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+    window.addEventListener('pagehide', cleanup);
+    
     // Back button
-    backBtn.addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            cleanup();
+            window.location.href = 'index.html';
+        });
+    }
     
     // Tab switching
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            activeTab = btn.dataset.tab;
-            tabButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderSidebarChannels();
+    if (tabButtons && tabButtons.length > 0) {
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeTab = btn.dataset.tab;
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderSidebarChannels();
+            });
         });
-    });
+    }
     
     // Category selection
     if (categoryCards && categoryCards.length > 0) {
@@ -77,30 +161,39 @@ function setupEventListeners() {
         });
     }
     
-    // Fullscreen on double click (desktop)
-    if (videoContainerPlayer) {
+    // Fullscreen on double click (desktop) - only add once
+    if (videoContainerPlayer && !videoContainerPlayer.hasAttribute('data-dblclick-bound')) {
+        videoContainerPlayer.setAttribute('data-dblclick-bound', 'true');
         videoContainerPlayer.addEventListener('dblclick', toggleFullscreen);
     }
     
     // Also allow double click on video/iframe (desktop)
-    if (videoPlayer) {
+    if (videoPlayer && !videoPlayer.hasAttribute('data-dblclick-bound')) {
+        videoPlayer.setAttribute('data-dblclick-bound', 'true');
         videoPlayer.addEventListener('dblclick', toggleFullscreen);
     }
     
-    if (iframePlayer) {
+    if (iframePlayer && !iframePlayer.hasAttribute('data-dblclick-bound')) {
+        iframePlayer.setAttribute('data-dblclick-bound', 'true');
         iframePlayer.addEventListener('dblclick', toggleFullscreen);
     }
     
     // Fullscreen on double tap (mobile/touch devices)
-    // Only add to container, not video/iframe to avoid conflicts with video controls
-    setupDoubleTapFullscreen(videoContainerPlayer);
+    if (videoContainerPlayer && !videoContainerPlayer.hasAttribute('data-touch-bound')) {
+        videoContainerPlayer.setAttribute('data-touch-bound', 'true');
+        setupDoubleTapFullscreen(videoContainerPlayer);
+    }
     
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            window.location.href = 'index.html';
-        }
-    });
+    // Keyboard shortcuts - only add once
+    if (!document.hasAttribute('data-keydown-bound')) {
+        document.setAttribute('data-keydown-bound', 'true');
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cleanup();
+                window.location.href = 'index.html';
+            }
+        });
+    }
 }
 
 // Load M3U file
@@ -281,8 +374,8 @@ function renderSidebarChannels() {
     
     channelsSidebarList.appendChild(fragment);
     
-    // Use event delegation (better performance)
-    if (!channelsSidebarList.hasAttribute('data-delegated')) {
+    // Use event delegation (better performance) - only add once
+    if (channelsSidebarList && !channelsSidebarList.hasAttribute('data-delegated')) {
         channelsSidebarList.setAttribute('data-delegated', 'true');
         channelsSidebarList.addEventListener('click', (e) => {
             const favoriteBtn = e.target.closest('.favorite-sidebar-btn');
@@ -290,7 +383,10 @@ function renderSidebarChannels() {
                 e.stopPropagation();
                 const channelId = parseInt(favoriteBtn.dataset.channelId);
                 toggleFavorite(channelId);
-                renderSidebarChannels();
+                // Use requestAnimationFrame to prevent render loops
+                requestAnimationFrame(() => {
+                    renderSidebarChannels();
+                });
                 return;
             }
             
@@ -392,18 +488,13 @@ function playChannel(channel) {
     videoPlaceholderPlayer.style.display = 'flex';
     loadingPlayer.classList.add('active');
     
-    // Stop previous playback
-    videoPlayer.pause();
-    videoPlayer.src = '';
-    videoPlayer.load();
+    // Cleanup previous playback
+    cleanup();
     
-    if (videoPlayer.hls) {
-        videoPlayer.hls.destroy();
-        videoPlayer.hls = null;
+    // Reset displays
+    if (iframePlayer) {
+        iframePlayer.style.display = 'none';
     }
-    
-    iframePlayer.src = '';
-    iframePlayer.style.display = 'none';
     
     // Play video
     if (channel.url.includes('.m3u8')) {
@@ -432,8 +523,22 @@ function playM3U8(url) {
     }
     
     if (Hls.isSupported()) {
+        // Cleanup previous HLS instance
+        if (hlsInstance) {
+            try {
+                hlsInstance.destroy();
+            } catch (e) {
+                console.warn('Previous HLS cleanup error:', e);
+            }
+        }
+        
         if (videoPlayer.hls) {
-            videoPlayer.hls.destroy();
+            try {
+                videoPlayer.hls.destroy();
+            } catch (e) {
+                console.warn('Video player HLS cleanup error:', e);
+            }
+            videoPlayer.hls = null;
         }
         
         const hls = new Hls({
@@ -448,6 +553,7 @@ function playM3U8(url) {
             }
         });
         
+        hlsInstance = hls;
         videoPlayer.hls = hls;
         
         hls.loadSource(url);
@@ -458,14 +564,17 @@ function playM3U8(url) {
         
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             manifestParsed = true;
-            if (timeout) clearTimeout(timeout);
+            if (timeout) {
+                clearTimeout(timeout);
+                activeTimeouts = activeTimeouts.filter(t => t !== timeout);
+            }
             videoPlayer.play().catch(err => {
                 console.error('Playback error:', err);
-                loadingPlayer.classList.remove('active');
+                if (loadingPlayer) loadingPlayer.classList.remove('active');
                 showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
             });
-            loadingPlayer.classList.remove('active');
-            videoPlaceholderPlayer.style.display = 'none';
+            if (loadingPlayer) loadingPlayer.classList.remove('active');
+            if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
         });
         
         hls.on(Hls.Events.ERROR, (event, data) => {
@@ -476,8 +585,12 @@ function playM3U8(url) {
                         try {
                             hls.startLoad();
                         } catch(e) {
-                            loadingPlayer.classList.remove('active');
-                            hls.destroy();
+                            if (loadingPlayer) loadingPlayer.classList.remove('active');
+                            try {
+                                hls.destroy();
+                            } catch (destroyErr) {
+                                console.warn('HLS destroy error:', destroyErr);
+                            }
                             showError('Ağ hatası. İnternet bağlantınızı kontrol edin.');
                         }
                         break;
@@ -485,25 +598,40 @@ function playM3U8(url) {
                         try {
                             hls.recoverMediaError();
                         } catch(e) {
-                            loadingPlayer.classList.remove('active');
-                            hls.destroy();
+                            if (loadingPlayer) loadingPlayer.classList.remove('active');
+                            try {
+                                hls.destroy();
+                            } catch (destroyErr) {
+                                console.warn('HLS destroy error:', destroyErr);
+                            }
                             showError('Video çözümlenemedi. Lütfen başka bir kanal deneyin.');
                         }
                         break;
                     default:
-                        if (timeout) clearTimeout(timeout);
-                        loadingPlayer.classList.remove('active');
-                        hls.destroy();
+                        if (timeout) {
+                            clearTimeout(timeout);
+                            activeTimeouts = activeTimeouts.filter(t => t !== timeout);
+                        }
+                        if (loadingPlayer) loadingPlayer.classList.remove('active');
+                        try {
+                            hls.destroy();
+                        } catch (destroyErr) {
+                            console.warn('HLS destroy error:', destroyErr);
+                        }
                         showError('Kanal yüklenemedi. Lütfen başka bir kanal deneyin.');
                         break;
                 }
             }
         });
         
-        timeout = setTimeout(() => {
+        timeout = safeSetTimeout(() => {
             if (!manifestParsed) {
-                loadingPlayer.classList.remove('active');
-                hls.destroy();
+                if (loadingPlayer) loadingPlayer.classList.remove('active');
+                try {
+                    hls.destroy();
+                } catch (destroyErr) {
+                    console.warn('HLS destroy error:', destroyErr);
+                }
                 showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
             }
         }, 15000);
@@ -523,16 +651,19 @@ function playM3U8(url) {
             });
         }
         
-        const safariTimeout = setTimeout(() => {
+        const safariTimeout = safeSetTimeout(() => {
             if (videoPlayer.readyState === 0) {
-                loadingPlayer.classList.remove('active');
+                if (loadingPlayer) loadingPlayer.classList.remove('active');
                 showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
             }
         }, 15000);
         
-        videoPlayer.addEventListener('loadeddata', () => {
+        const loadedDataHandler = () => {
             clearTimeout(safariTimeout);
-        }, { once: true });
+            activeTimeouts = activeTimeouts.filter(t => t !== safariTimeout);
+            videoPlayer.removeEventListener('loadeddata', loadedDataHandler);
+        };
+        videoPlayer.addEventListener('loadeddata', loadedDataHandler, { once: true });
     } else {
         loadingPlayer.classList.remove('active');
         showError('Tarayıcınız bu video formatını desteklemiyor.');
@@ -585,19 +716,19 @@ function setupDoubleTapFullscreen(element) {
     if (!element) return;
     
     let lastTap = 0;
-    let tapTimeout;
+    let tapTimeout = null;
     let touchStartX = 0;
     let touchStartY = 0;
     
-    element.addEventListener('touchstart', function(e) {
+    const touchStartHandler = function(e) {
         // Store touch start position
         if (e.touches.length === 1) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         }
-    }, { passive: true });
+    };
     
-    element.addEventListener('touchend', function(e) {
+    const touchEndHandler = function(e) {
         // Only handle single finger taps
         if (e.changedTouches.length !== 1) return;
         
@@ -612,13 +743,22 @@ function setupDoubleTapFullscreen(element) {
         if (deltaX > 10 || deltaY > 10) {
             // It's a swipe, not a tap - ignore
             lastTap = 0;
+            if (tapTimeout) {
+                clearTimeout(tapTimeout);
+                activeTimeouts = activeTimeouts.filter(t => t !== tapTimeout);
+                tapTimeout = null;
+            }
             return;
         }
         
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
         
-        clearTimeout(tapTimeout);
+        if (tapTimeout) {
+            clearTimeout(tapTimeout);
+            activeTimeouts = activeTimeouts.filter(t => t !== tapTimeout);
+            tapTimeout = null;
+        }
         
         if (tapLength < 400 && tapLength > 0) {
             // Double tap detected
@@ -628,13 +768,21 @@ function setupDoubleTapFullscreen(element) {
             lastTap = 0; // Reset to prevent triple tap
         } else {
             // Single tap - wait to see if there's another tap
-            tapTimeout = setTimeout(() => {
+            tapTimeout = safeSetTimeout(() => {
                 // Single tap confirmed, do nothing
+                tapTimeout = null;
             }, 400);
         }
         
         lastTap = currentTime;
-    }, { passive: false });
+    };
+    
+    element.addEventListener('touchstart', touchStartHandler, { passive: true });
+    element.addEventListener('touchend', touchEndHandler, { passive: false });
+    
+    // Store handlers for potential cleanup
+    element._touchStartHandler = touchStartHandler;
+    element._touchEndHandler = touchEndHandler;
 }
 
 // Toggle Fullscreen
@@ -705,10 +853,10 @@ function showError(message) {
     errorDiv.textContent = message;
     document.body.appendChild(errorDiv);
     
-    setTimeout(() => {
+    const fadeTimeout = safeSetTimeout(() => {
         errorDiv.style.opacity = '0';
         errorDiv.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => {
+        const removeTimeout = safeSetTimeout(() => {
             errorDiv.remove();
         }, 300);
     }, 5000);

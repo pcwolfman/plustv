@@ -391,7 +391,7 @@ function changeView(view, save = true) {
 }
 
 // Debounce function for search
-let searchTimeout;
+let searchTimeout = null;
 function handleSearch(e) {
     const searchTerm = e.target.value.toLowerCase().trim();
     
@@ -404,9 +404,12 @@ function handleSearch(e) {
     }
     
     // Debounce: wait 300ms before rendering
-    clearTimeout(searchTimeout);
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
     searchTimeout = setTimeout(() => {
         renderChannels();
+        searchTimeout = null;
     }, 300);
 }
 

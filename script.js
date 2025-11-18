@@ -81,6 +81,17 @@ function setupEventListeners() {
     
     // Initialize view
     changeView(currentView, false);
+    
+    // Event delegation for channel cards (better performance)
+    if (channelsGrid) {
+        channelsGrid.addEventListener('click', (e) => {
+            const channelCard = e.target.closest('.channel-card');
+            if (channelCard && channelCard.dataset.channelId) {
+                const channelId = channelCard.dataset.channelId;
+                window.location.href = `player.html?id=${channelId}&category=${encodeURIComponent(currentCategory)}`;
+            }
+        });
+    }
 
 }
 
@@ -171,7 +182,7 @@ function selectCategory(category) {
     renderChannels();
 }
 
-// Render Channels
+// Render Channels (optimized)
 function renderChannels() {
     let filteredChannels = channels;
     
@@ -180,11 +191,12 @@ function renderChannels() {
         filteredChannels = channels.filter(ch => ch.category === currentCategory);
     }
     
-    // Filter by search
+    // Filter by search (optimized with early return)
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
         filteredChannels = filteredChannels.filter(ch => 
-            ch.name.toLowerCase().includes(searchTerm)
+            ch.name.toLowerCase().includes(searchLower)
         );
     }
     
@@ -230,45 +242,112 @@ function renderChannels() {
         return;
     }
     
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    
     // Render channel cards
     filteredChannels.forEach(channel => {
         const channelCard = document.createElement('div');
         channelCard.className = 'channel-card';
+        channelCard.dataset.channelId = channel.id;
         
         // Liste görünümü için farklı HTML yapısı
         if (currentView === 'list') {
-            channelCard.innerHTML = `
-                ${channel.tvgLogo 
-                    ? `<img src="${channel.tvgLogo}" alt="${channel.name}" class="channel-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                     <div class="channel-logo-placeholder" style="display: none;">📺</div>`
-                    : `<div class="channel-logo-placeholder">📺</div>`
-                }
-                <div class="channel-info-list">
-                    <div class="channel-name">${channel.name}</div>
-                    <div class="channel-category">${channel.category}</div>
-                </div>
-            `;
+            const logoContainer = document.createElement('div');
+            logoContainer.className = 'channel-logo-container';
+            
+            if (channel.tvgLogo) {
+                const img = document.createElement('img');
+                img.src = channel.tvgLogo;
+                img.alt = channel.name;
+                img.className = 'channel-logo';
+                img.loading = 'lazy'; // Lazy loading for performance
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    if (this.nextElementSibling) {
+                        this.nextElementSibling.style.display = 'flex';
+                    }
+                };
+                logoContainer.appendChild(img);
+                
+                const placeholder = document.createElement('div');
+                placeholder.className = 'channel-logo-placeholder';
+                placeholder.style.display = 'none';
+                placeholder.textContent = '📺';
+                logoContainer.appendChild(placeholder);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'channel-logo-placeholder';
+                placeholder.textContent = '📺';
+                logoContainer.appendChild(placeholder);
+            }
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'channel-info-list';
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'channel-name';
+            nameDiv.textContent = channel.name;
+            
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'channel-category';
+            categoryDiv.textContent = channel.category;
+            
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(categoryDiv);
+            
+            channelCard.appendChild(logoContainer);
+            channelCard.appendChild(infoDiv);
         } else {
-            channelCard.innerHTML = `
-                ${channel.tvgLogo 
-                    ? `<img src="${channel.tvgLogo}" alt="${channel.name}" class="channel-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                     <div class="channel-logo-placeholder" style="display: none;">📺</div>`
-                    : `<div class="channel-logo-placeholder">📺</div>`
-                }
-                <div class="channel-name">${channel.name}</div>
-                <div class="channel-category">${channel.category}</div>
-            `;
+            const logoContainer = document.createElement('div');
+            logoContainer.className = 'channel-logo-container';
+            
+            if (channel.tvgLogo) {
+                const img = document.createElement('img');
+                img.src = channel.tvgLogo;
+                img.alt = channel.name;
+                img.className = 'channel-logo';
+                img.loading = 'lazy'; // Lazy loading for performance
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    if (this.nextElementSibling) {
+                        this.nextElementSibling.style.display = 'flex';
+                    }
+                };
+                logoContainer.appendChild(img);
+                
+                const placeholder = document.createElement('div');
+                placeholder.className = 'channel-logo-placeholder';
+                placeholder.style.display = 'none';
+                placeholder.textContent = '📺';
+                logoContainer.appendChild(placeholder);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'channel-logo-placeholder';
+                placeholder.textContent = '📺';
+                logoContainer.appendChild(placeholder);
+            }
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'channel-name';
+            nameDiv.textContent = channel.name;
+            
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'channel-category';
+            categoryDiv.textContent = channel.category;
+            
+            channelCard.appendChild(logoContainer);
+            channelCard.appendChild(nameDiv);
+            channelCard.appendChild(categoryDiv);
         }
         
-        channelCard.addEventListener('click', () => {
-            // Navigate to player page
-            window.location.href = `player.html?id=${channel.id}&category=${encodeURIComponent(currentCategory)}`;
-        });
-        
-        if (channelsGrid) {
-            channelsGrid.appendChild(channelCard);
-        }
+        fragment.appendChild(channelCard);
     });
+    
+    // Use event delegation instead of individual listeners
+    if (channelsGrid) {
+        channelsGrid.appendChild(fragment);
+    }
 }
 
 // Change View
@@ -311,7 +390,8 @@ function changeView(view, save = true) {
     renderChannels();
 }
 
-// Handle Search
+// Debounce function for search
+let searchTimeout;
 function handleSearch(e) {
     const searchTerm = e.target.value.toLowerCase().trim();
     
@@ -323,7 +403,11 @@ function handleSearch(e) {
         }
     }
     
-    renderChannels();
+    // Debounce: wait 300ms before rendering
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        renderChannels();
+    }, 300);
 }
 
 

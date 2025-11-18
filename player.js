@@ -204,46 +204,106 @@ function renderSidebarChannels() {
         return;
     }
     
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    
     filteredChannels.forEach(channel => {
         const channelItem = document.createElement('div');
         channelItem.className = 'channel-sidebar-item';
+        channelItem.dataset.channelId = channel.id;
         if (currentChannel && currentChannel.id === channel.id) {
             channelItem.classList.add('active');
         }
         
         const isFavorite = favoriteChannels.includes(channel.id);
         
-        channelItem.innerHTML = `
-            <div class="channel-sidebar-content">
-                ${channel.tvgLogo 
-                    ? `<img src="${channel.tvgLogo}" alt="${channel.name}" class="channel-sidebar-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                     <div class="channel-sidebar-logo-placeholder" style="display: none;">📺</div>`
-                    : `<div class="channel-sidebar-logo-placeholder">📺</div>`
-                }
-                <div class="channel-sidebar-info">
-                    <div class="channel-sidebar-name">${channel.name}</div>
-                    <div class="channel-sidebar-category">${channel.category}</div>
-                </div>
-            </div>
-            <button class="favorite-sidebar-btn" data-channel-id="${channel.id}" title="${isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}">
-                ${isFavorite ? '⭐' : '☆'}
-            </button>
-        `;
+        // Create structure with DOM methods (better performance than innerHTML)
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'channel-sidebar-content';
         
-        channelItem.addEventListener('click', (e) => {
-            if (e.target.classList.contains('favorite-sidebar-btn') || e.target.closest('.favorite-sidebar-btn')) {
+        const logoContainer = document.createElement('div');
+        logoContainer.className = 'channel-sidebar-logo-container';
+        
+        if (channel.tvgLogo) {
+            const img = document.createElement('img');
+            img.src = channel.tvgLogo;
+            img.alt = channel.name;
+            img.className = 'channel-sidebar-logo';
+            img.loading = 'lazy'; // Lazy loading
+            img.onerror = function() {
+                this.style.display = 'none';
+                if (this.nextElementSibling) {
+                    this.nextElementSibling.style.display = 'flex';
+                }
+            };
+            logoContainer.appendChild(img);
+            
+            const placeholder = document.createElement('div');
+            placeholder.className = 'channel-sidebar-logo-placeholder';
+            placeholder.style.display = 'none';
+            placeholder.textContent = '📺';
+            logoContainer.appendChild(placeholder);
+        } else {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'channel-sidebar-logo-placeholder';
+            placeholder.textContent = '📺';
+            logoContainer.appendChild(placeholder);
+        }
+        
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'channel-sidebar-info';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'channel-sidebar-name';
+        nameDiv.textContent = channel.name;
+        
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'channel-sidebar-category';
+        categoryDiv.textContent = channel.category;
+        
+        infoDiv.appendChild(nameDiv);
+        infoDiv.appendChild(categoryDiv);
+        
+        contentDiv.appendChild(logoContainer);
+        contentDiv.appendChild(infoDiv);
+        
+        const favoriteBtn = document.createElement('button');
+        favoriteBtn.className = 'favorite-sidebar-btn';
+        favoriteBtn.dataset.channelId = channel.id;
+        favoriteBtn.title = isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle';
+        favoriteBtn.textContent = isFavorite ? '⭐' : '☆';
+        
+        channelItem.appendChild(contentDiv);
+        channelItem.appendChild(favoriteBtn);
+        
+        fragment.appendChild(channelItem);
+    });
+    
+    channelsSidebarList.appendChild(fragment);
+    
+    // Use event delegation (better performance)
+    if (!channelsSidebarList.hasAttribute('data-delegated')) {
+        channelsSidebarList.setAttribute('data-delegated', 'true');
+        channelsSidebarList.addEventListener('click', (e) => {
+            const favoriteBtn = e.target.closest('.favorite-sidebar-btn');
+            if (favoriteBtn) {
                 e.stopPropagation();
-                const btn = e.target.closest('.favorite-sidebar-btn');
-                const channelId = parseInt(btn.dataset.channelId);
+                const channelId = parseInt(favoriteBtn.dataset.channelId);
                 toggleFavorite(channelId);
                 renderSidebarChannels();
-            } else {
-                playChannel(channel);
+                return;
+            }
+            
+            const channelItem = e.target.closest('.channel-sidebar-item');
+            if (channelItem && channelItem.dataset.channelId) {
+                const channelId = parseInt(channelItem.dataset.channelId);
+                const channel = channels.find(ch => ch.id === channelId);
+                if (channel) {
+                    playChannel(channel);
+                }
             }
         });
-        
-        channelsSidebarList.appendChild(channelItem);
-    });
+    }
 }
 
 // Render Category Sidebar
@@ -314,18 +374,19 @@ function playChannel(channel) {
         videoPlayer.title = channel.name;
     }
     
-    // Update active channel in sidebar
-    document.querySelectorAll('.channel-sidebar-item').forEach(item => {
-        item.classList.remove('active');
+    // Update active channel in sidebar (optimized)
+    const items = channelsSidebarList.querySelectorAll('.channel-sidebar-item');
+    items.forEach(item => {
+        if (parseInt(item.dataset.channelId) === channel.id) {
+            item.classList.add('active');
+            // Use requestAnimationFrame for smooth scrolling
+            requestAnimationFrame(() => {
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        } else {
+            item.classList.remove('active');
+        }
     });
-    const activeItem = Array.from(channelsSidebarList.children).find(item => {
-        const btn = item.querySelector('.favorite-sidebar-btn');
-        return btn && parseInt(btn.dataset.channelId) === channel.id;
-    });
-    if (activeItem) {
-        activeItem.classList.add('active');
-        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
     
     // Show loading
     videoPlaceholderPlayer.style.display = 'flex';
@@ -377,8 +438,11 @@ function playM3U8(url) {
         
         const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: true,
+            lowLatencyMode: false, // Disable for better stability
             debug: false,
+            maxBufferLength: 30, // Limit buffer for better performance
+            maxMaxBufferLength: 60,
+            maxBufferSize: 60 * 1000 * 1000, // 60MB max buffer
             xhrSetup: function(xhr, url) {
                 xhr.withCredentials = false;
             }

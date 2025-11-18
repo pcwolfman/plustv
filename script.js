@@ -2,6 +2,8 @@
 let channels = [];
 let currentCategory = 'all';
 let currentView = localStorage.getItem('channelView') || 'list'; // 'large', 'small', 'list'
+let allCategories = new Set(); // Tüm kategorileri tutmak için
+const m3uFiles = ['tv.m3u', 'tr.m3u']; // Yüklenecek M3U dosyaları
 
 // DOM Elements
 let searchInput;
@@ -13,11 +15,53 @@ let channelCount;
 let viewMenuBtn;
 let viewIcon;
 
+// Tesla Screen Detection & Orientation Handler
+function detectTeslaScreen() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isLandscape = width > height;
+    
+    // Tesla ekranları genellikle 17 inç, 1920x1200 veya benzeri
+    // Tesla Model S/X: ~1920x1080 veya 1920x1200
+    // Tesla Model 3/Y: ~1920x1200
+    const isTeslaScreen = (
+        (width >= 1700 && width <= 2200 && height >= 900 && height <= 1300) ||
+        (width >= 900 && width <= 1300 && height >= 1700 && height <= 2200)
+    );
+    
+    if (isTeslaScreen) {
+        document.documentElement.classList.add('tesla-screen');
+        if (isLandscape) {
+            document.documentElement.classList.add('tesla-landscape');
+            document.documentElement.classList.remove('tesla-portrait');
+        } else {
+            document.documentElement.classList.add('tesla-portrait');
+            document.documentElement.classList.remove('tesla-landscape');
+        }
+    } else {
+        document.documentElement.classList.remove('tesla-screen', 'tesla-landscape', 'tesla-portrait');
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Load saved theme
     const savedTheme = localStorage.getItem('theme') || 'purple';
     applyTheme(savedTheme);
+    
+    // Detect Tesla screen and orientation
+    detectTeslaScreen();
+    
+    // Listen for orientation changes
+    window.addEventListener('resize', detectTeslaScreen);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(detectTeslaScreen, 100); // Delay for orientation to settle
+    });
+    
+    // Also use screen.orientation API if available
+    if (screen.orientation) {
+        screen.orientation.addEventListener('change', detectTeslaScreen);
+    }
     
     loadChannelsFromM3U();
     setupEventListeners();
@@ -48,15 +92,7 @@ function setupEventListeners() {
         });
     }
 
-    // Category selection
-    if (categoryCards && categoryCards.length > 0) {
-        categoryCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const category = card.dataset.category;
-                selectCategory(category);
-            });
-        });
-    }
+    // Category selection - setupCategoryEventListeners() tarafından yapılıyor
 
     // View toggle - cycle through views
     if (viewMenuBtn) {
@@ -98,61 +134,167 @@ function setupEventListeners() {
 // Load M3U file
 async function loadChannelsFromM3U() {
     try {
-        const response = await fetch('tv.m3u');
-        const text = await response.text();
-        const lines = text.split('\n');
-        
-        let currentChannel = null;
+        channels = [];
+        allCategories.clear();
         let channelId = 1;
         
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            
-            if (!line) continue;
-            
-            // Parse EXTINF line
-            if (line.startsWith('#EXTINF:')) {
-                const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
-                const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
-                const groupTitleMatch = line.match(/group-title="([^"]*)"/);
+        // Tüm M3U dosyalarını yükle
+        for (const m3uFile of m3uFiles) {
+            try {
+                const response = await fetch(m3uFile);
+                if (!response.ok) {
+                    console.warn(`⚠️ ${m3uFile} dosyası bulunamadı, atlanıyor...`);
+                    continue;
+                }
+                const text = await response.text();
+                const lines = text.split('\n');
                 
-                // Get channel name (after comma)
-                const channelNameMatch = line.match(/,(.*)$/);
-                let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
+                let currentChannel = null;
+                let fileChannelCount = 0;
                 
-                // Get category from group-title
-                const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (!line) continue;
+                    
+                    // Parse EXTINF line
+                    if (line.startsWith('#EXTINF:')) {
+                        const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
+                        const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
+                        const groupTitleMatch = line.match(/group-title="([^"]*)"/);
+                        
+                        // Get channel name (after comma)
+                        const channelNameMatch = line.match(/,(.*)$/);
+                        let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
+                        
+                        // Get category from group-title
+                        const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                        
+                        // Clean category name (remove " - Yurt Disi" etc.)
+                        let category = groupTitle.split(' - ')[0].trim();
+                        
+                        // Kategoriyi ekle
+                        if (category) {
+                            allCategories.add(category);
+                        }
+                        
+                        currentChannel = {
+                            id: channelId++,
+                            name: channelName,
+                            url: '',
+                            category: category,
+                            tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
+                            tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : ''
+                        };
+                    }
+                    // URL line
+                    else if ((line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) && currentChannel) {
+                        currentChannel.url = line;
+                        channels.push(currentChannel);
+                        fileChannelCount++;
+                        currentChannel = null;
+                    }
+                }
                 
-                // Clean category name (remove " - Yurt Disi" etc.)
-                let category = groupTitle.split(' - ')[0].trim();
-                
-                currentChannel = {
-                    id: channelId++,
-                    name: channelName,
-                    url: '',
-                    category: category,
-                    tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
-                    tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : ''
-                };
-            }
-            // URL line
-            else if ((line.startsWith('http://') || line.startsWith('https://')) && currentChannel) {
-                currentChannel.url = line;
-                channels.push(currentChannel);
-                currentChannel = null;
+                console.log(`✅ ${m3uFile}: ${fileChannelCount} kanal eklendi`);
+            } catch (fileError) {
+                console.warn(`⚠️ ${m3uFile} yüklenirken hata:`, fileError);
             }
         }
         
-        console.log(`✅ ${channels.length} kanal yüklendi!`);
+        console.log(`✅ Toplam ${channels.length} kanal yüklendi!`);
+        console.log(`✅ ${allCategories.size} kategori bulundu:`, Array.from(allCategories).sort());
+        
+        // Dinamik kategori kartlarını oluştur
+        renderDynamicCategories();
+        
+        // Event listener'ları yeniden bağla
+        setupCategoryEventListeners();
+        
         renderChannels();
         
         // Set first category as active
-        if (categoryCards.length > 0) {
-            categoryCards[0].classList.add('active');
+        const firstCategoryCard = document.querySelector('.category-card[data-category="all"]');
+        if (firstCategoryCard) {
+            firstCategoryCard.classList.add('active');
         }
     } catch (error) {
         console.error('M3U dosyası yüklenemedi:', error);
         showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');
+    }
+}
+
+// Kategori ikonları mapping
+const categoryIcons = {
+    'all': '📺',
+    'Ulusal': '📡',
+    'Haber': '📰',
+    'Spor': '⚽',
+    'Eglence': '🎭',
+    'Eğlence': '🎭',
+    'Muzik': '🎵',
+    'Müzik': '🎵',
+    'Belgesel': '🎬',
+    'Dini': '🕌',
+    'Cocuk': '👶',
+    'Çocuk': '👶',
+    'Ekonomi': '💰',
+    'Yurt Disi': '🌍',
+    'Yurt Dışı': '🌍',
+    'Radyo Canlı': '📻',
+    'Radyo': '📻',
+    'Diğer': '📺'
+};
+
+// Dinamik kategori kartlarını oluştur
+function renderDynamicCategories() {
+    const categoriesContainer = document.querySelector('.categories-container');
+    if (!categoriesContainer) return;
+    
+    // Mevcut kartları temizle (Tümü hariç)
+    const existingCards = categoriesContainer.querySelectorAll('.category-card:not([data-category="all"])');
+    existingCards.forEach(card => card.remove());
+    
+    // Kategorileri sırala
+    const sortedCategories = Array.from(allCategories).sort();
+    
+    // Her kategori için kart oluştur
+    sortedCategories.forEach(category => {
+        const categoryCard = document.createElement('div');
+        categoryCard.className = 'category-card';
+        categoryCard.dataset.category = category;
+        
+        const icon = document.createElement('div');
+        icon.className = 'category-icon';
+        icon.textContent = categoryIcons[category] || '📺';
+        
+        const name = document.createElement('div');
+        name.className = 'category-name';
+        name.textContent = category;
+        
+        categoryCard.appendChild(icon);
+        categoryCard.appendChild(name);
+        
+        categoriesContainer.appendChild(categoryCard);
+    });
+}
+
+// Kategori event listener'larını yeniden bağla
+function setupCategoryEventListeners() {
+    categoryCards = document.querySelectorAll('.category-card');
+    
+    if (categoryCards && categoryCards.length > 0) {
+        categoryCards.forEach(card => {
+            // Önceki listener'ları kaldır
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+            
+            // Yeni listener ekle
+            newCard.addEventListener('click', () => {
+                const category = newCard.dataset.category;
+                selectCategory(category);
+            });
+        });
     }
 }
 

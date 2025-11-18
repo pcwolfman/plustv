@@ -361,88 +361,88 @@ body {
 
 .channels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.625rem;
     contain: layout style paint;
     will-change: contents;
 }
 
 /* Büyük Kart Görünümü */
 .channels-grid.view-large {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
 }
 
 .channels-grid.view-large .channel-card {
-    min-height: 240px;
-    padding: 1.5rem;
+    min-height: 140px;
+    padding: 0.75rem;
 }
 
 .channels-grid.view-large .channel-logo,
 .channels-grid.view-large .channel-logo-placeholder {
-    width: 120px;
-    height: 120px;
+    width: 64px;
+    height: 64px;
 }
 
 .channels-grid.view-large .channel-name {
-    font-size: 1.125rem;
+    font-size: 0.8125rem;
 }
 
 /* Küçük Kart Görünümü */
 .channels-grid.view-small {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
 }
 
 .channels-grid.view-small .channel-card {
-    min-height: 140px;
-    padding: 1rem;
+    min-height: 95px;
+    padding: 0.5rem;
 }
 
 .channels-grid.view-small .channel-logo,
 .channels-grid.view-small .channel-logo-placeholder {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
 }
 
 .channels-grid.view-small .channel-name {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
 }
 
 .channels-grid.view-small .channel-category {
-    font-size: 0.6875rem;
+    font-size: 0.5625rem;
 }
 
 /* Liste Görünümü */
 .channels-grid.view-list {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 0.375rem;
 }
 
 .channels-grid.view-list .channel-card {
     min-height: auto;
-    padding: 1rem 1.25rem;
+    padding: 0.625rem 0.875rem;
     flex-direction: row;
     text-align: left;
     justify-content: flex-start;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .channels-grid.view-list .channel-logo,
 .channels-grid.view-list .channel-logo-placeholder {
-    width: 64px;
-    height: 64px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
 }
 
 .channels-grid.view-list .channel-name {
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+    margin-bottom: 0.125rem;
     text-align: left;
 }
 
 .channels-grid.view-list .channel-category {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
 }
 
 .channels-grid.view-list .channel-info-list {
@@ -455,20 +455,20 @@ body {
 
 .channel-card {
     background: var(--bg-card);
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    padding: 1.25rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.625rem;
     cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     text-align: center;
     position: relative;
     overflow: hidden;
-    min-height: 180px;
+    min-height: 110px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.375rem;
     will-change: transform;
     contain: layout style paint;
     transform: translateZ(0); /* GPU acceleration */
@@ -487,9 +487,9 @@ body {
 }
 
 .channel-card:hover {
-    transform: translate3d(0, -6px, 0); /* GPU acceleration */
+    transform: translate3d(0, -3px, 0); /* GPU acceleration - daha hafif hover */
     border-color: var(--primary);
-    box-shadow: 0 12px 24px var(--shadow-lg);
+    box-shadow: 0 6px 12px var(--shadow-lg);
 }
 
 .channel-card:hover::before {
@@ -497,46 +497,54 @@ body {
 }
 
 .channel-logo {
-    width: 80px;
-    height: 80px;
+    width: 52px;
+    height: 52px;
     object-fit: contain;
-    border-radius: 12px;
+    border-radius: 8px;
     background: var(--bg-dark);
     will-change: opacity;
     transform: translateZ(0); /* GPU acceleration */
-    padding: 0.5rem;
+    padding: 0.25rem;
     position: relative;
     z-index: 1;
 }
 
 .channel-logo-placeholder {
-    width: 80px;
-    height: 80px;
+    width: 52px;
+    height: 52px;
     background: var(--bg-dark);
-    border-radius: 12px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.25rem;
     position: relative;
     z-index: 1;
 }
 
 .channel-name {
-    font-size: 0.9375rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-primary);
     position: relative;
     z-index: 1;
     text-align: center;
-    line-height: 1.4;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .channel-category {
-    font-size: 0.75rem;
+    font-size: 0.625rem;
     color: var(--text-muted);
     position: relative;
     z-index: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 /* Video Modal */
@@ -735,7 +743,297 @@ body {
     font-size: 0.875rem;
 }
 
+/* Tesla Ekranları için Özel Tasarım */
+/* Yatay Mod (Landscape) */
+.tesla-screen.tesla-landscape .app-container {
+    max-width: 100%;
+    padding: 1rem 1.5rem;
+}
+
+.tesla-screen.tesla-landscape .search-header {
+    padding: 1rem 0;
+}
+
+.tesla-screen.tesla-landscape .search-container {
+    max-width: 100%;
+    gap: 1rem;
+}
+
+.tesla-screen.tesla-landscape .categories-section {
+    padding: 0.75rem 0;
+}
+
+.tesla-screen.tesla-landscape .categories-container {
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+}
+
+.tesla-screen.tesla-landscape .category-card {
+    min-width: 70px;
+    max-width: 70px;
+    min-height: 70px;
+    padding: 0.625rem;
+}
+
+.tesla-screen.tesla-landscape .category-icon {
+    font-size: 1.5rem;
+}
+
+.tesla-screen.tesla-landscape .category-name {
+    font-size: 0.75rem;
+}
+
+.tesla-screen.tesla-landscape .channels-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.tesla-screen.tesla-landscape .channels-grid.view-large {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.tesla-screen.tesla-landscape .channels-grid.view-small {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.5rem;
+}
+
+.tesla-screen.tesla-landscape .channel-card {
+    min-height: 130px;
+    padding: 0.75rem;
+    border-radius: 12px;
+}
+
+.tesla-screen.tesla-landscape .channel-logo,
+.tesla-screen.tesla-landscape .channel-logo-placeholder {
+    width: 60px;
+    height: 60px;
+}
+
+.tesla-screen.tesla-landscape .channel-name {
+    font-size: 0.8125rem;
+}
+
+.tesla-screen.tesla-landscape .channel-category {
+    font-size: 0.6875rem;
+}
+
+/* Dikey Mod (Portrait) */
+.tesla-screen.tesla-portrait .app-container {
+    max-width: 100%;
+    padding: 0.75rem 1rem;
+}
+
+.tesla-screen.tesla-portrait .search-header {
+    padding: 0.75rem 0;
+}
+
+.tesla-screen.tesla-portrait .categories-section {
+    padding: 0.5rem 0;
+}
+
+.tesla-screen.tesla-portrait .categories-container {
+    gap: 0.375rem;
+    padding-bottom: 0.5rem;
+}
+
+.tesla-screen.tesla-portrait .category-card {
+    min-width: 60px;
+    max-width: 60px;
+    min-height: 60px;
+    padding: 0.5rem;
+}
+
+.tesla-screen.tesla-portrait .category-icon {
+    font-size: 1.25rem;
+}
+
+.tesla-screen.tesla-portrait .category-name {
+    font-size: 0.6875rem;
+}
+
+.tesla-screen.tesla-portrait .channels-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.625rem;
+}
+
+.tesla-screen.tesla-portrait .channels-grid.view-large {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.tesla-screen.tesla-portrait .channels-grid.view-small {
+    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+    gap: 0.5rem;
+}
+
+.tesla-screen.tesla-portrait .channel-card {
+    min-height: 115px;
+    padding: 0.625rem;
+}
+
+.tesla-screen.tesla-portrait .channel-logo,
+.tesla-screen.tesla-portrait .channel-logo-placeholder {
+    width: 54px;
+    height: 54px;
+}
+
+.tesla-screen.tesla-portrait .channel-name {
+    font-size: 0.75rem;
+}
+
+.tesla-screen.tesla-portrait .channel-category {
+    font-size: 0.625rem;
+}
+
+/* Tesla Player Sayfası - Yatay Mod */
+.tesla-screen.tesla-landscape .player-page {
+    height: 100vh;
+}
+
+.tesla-screen.tesla-landscape .player-categories-section {
+    padding: 0.875rem 1rem 0.625rem 1rem;
+}
+
+.tesla-screen.tesla-landscape .player-categories-container {
+    gap: 0.625rem;
+    justify-content: flex-end;
+}
+
+.tesla-screen.tesla-landscape .player-categories-section .category-card {
+    min-width: 65px;
+    max-width: 65px;
+    min-height: 65px;
+    padding: 0.625rem;
+}
+
+.tesla-screen.tesla-landscape .player-categories-section .category-icon {
+    font-size: 1.375rem;
+}
+
+.tesla-screen.tesla-landscape .player-categories-section .category-name {
+    font-size: 0.6875rem;
+}
+
+.tesla-screen.tesla-landscape .player-sidebar {
+    width: 320px;
+}
+
+.tesla-screen.tesla-landscape .player-main {
+    flex: 1;
+}
+
+/* Tesla Player Sayfası - Dikey Mod */
+.tesla-screen.tesla-portrait .player-page {
+    height: 100vh;
+    flex-direction: column;
+}
+
+.tesla-screen.tesla-portrait .player-content-wrapper {
+    flex-direction: column;
+    flex: 1;
+}
+
+.tesla-screen.tesla-portrait .player-categories-section {
+    padding: 0.625rem 0.75rem 0.5rem 0.75rem;
+}
+
+.tesla-screen.tesla-portrait .player-categories-container {
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tesla-screen.tesla-portrait .player-categories-section .category-card {
+    min-width: 58px;
+    max-width: 58px;
+    min-height: 58px;
+    padding: 0.5rem;
+}
+
+.tesla-screen.tesla-portrait .player-categories-section .category-icon {
+    font-size: 1.125rem;
+}
+
+.tesla-screen.tesla-portrait .player-categories-section .category-name {
+    font-size: 0.625rem;
+}
+
+.tesla-screen.tesla-portrait .player-sidebar {
+    width: 100%;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.tesla-screen.tesla-portrait .channels-sidebar-list {
+    max-height: calc(40vh - 120px);
+}
+
+.tesla-screen.tesla-portrait .player-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tesla-screen.tesla-portrait .video-container-player {
+    flex: 1;
+    min-height: 0;
+}
+
 /* Responsive */
+/* 9-10 inç Yatay Araç Multimedya Ekranları için Optimizasyon */
+@media (min-width: 1024px) and (max-width: 1920px) and (min-height: 600px) and (max-height: 1200px) and (orientation: landscape) {
+    .channels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .channels-grid.view-large {
+        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+        gap: 0.625rem;
+    }
+
+    .channels-grid.view-small {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 0.375rem;
+    }
+
+    .channel-card {
+        padding: 0.5rem;
+        min-height: 100px;
+        border-radius: 8px;
+    }
+
+    .channel-logo,
+    .channel-logo-placeholder {
+        width: 46px;
+        height: 46px;
+    }
+
+    .channel-name {
+        font-size: 0.6875rem;
+    }
+
+    .channel-category {
+        font-size: 0.5625rem;
+    }
+
+    .categories-container {
+        gap: 0.375rem;
+        padding-bottom: 0.375rem;
+    }
+
+    .category-card {
+        padding: 0.5rem;
+        min-height: 50px;
+        min-width: 48px;
+        max-width: 48px;
+    }
+}
+
 /* Tablet and smaller */
 @media (max-width: 1024px) {
     .categories-container {
@@ -816,27 +1114,27 @@ body {
     }
 
     .channels-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
     }
 
     .channels-grid.view-large {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
 
     .channels-grid.view-small {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
     }
 
     .channel-card {
-        padding: 1rem;
-        min-height: 160px;
+        padding: 0.5rem;
+        min-height: 105px;
     }
 
     .channel-logo,
     .channel-logo-placeholder {
-        width: 60px;
-        height: 60px;
+        width: 48px;
+        height: 48px;
     }
 
     .channel-name {

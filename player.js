@@ -6,6 +6,8 @@ let favoriteChannels = JSON.parse(localStorage.getItem('favoriteChannels') || '[
 let activeTab = 'channels';
 let activeTimeouts = []; // Track all timeouts for cleanup
 let hlsInstance = null; // Track HLS instance
+let allCategories = new Set(); // Tüm kategorileri tutmak için
+const m3uFiles = ['tv.m3u', 'tr.m3u']; // Yüklenecek M3U dosyaları
 
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
@@ -20,11 +22,51 @@ const videoContainerPlayer = document.getElementById('videoContainerPlayer');
 const videoPlaceholderPlayer = document.getElementById('videoPlaceholderPlayer');
 const loadingPlayer = document.getElementById('loadingPlayer');
 
+// Tesla Screen Detection & Orientation Handler
+function detectTeslaScreen() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isLandscape = width > height;
+    
+    // Tesla ekranları genellikle 17 inç, 1920x1200 veya benzeri
+    const isTeslaScreen = (
+        (width >= 1700 && width <= 2200 && height >= 900 && height <= 1300) ||
+        (width >= 900 && width <= 1300 && height >= 1700 && height <= 2200)
+    );
+    
+    if (isTeslaScreen) {
+        document.documentElement.classList.add('tesla-screen');
+        if (isLandscape) {
+            document.documentElement.classList.add('tesla-landscape');
+            document.documentElement.classList.remove('tesla-portrait');
+        } else {
+            document.documentElement.classList.add('tesla-portrait');
+            document.documentElement.classList.remove('tesla-landscape');
+        }
+    } else {
+        document.documentElement.classList.remove('tesla-screen', 'tesla-landscape', 'tesla-portrait');
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Load saved theme
     const savedTheme = localStorage.getItem('theme') || 'purple';
     document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Detect Tesla screen and orientation
+    detectTeslaScreen();
+    
+    // Listen for orientation changes
+    window.addEventListener('resize', detectTeslaScreen);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(detectTeslaScreen, 100);
+    });
+    
+    if (screen.orientation) {
+        screen.orientation.addEventListener('change', detectTeslaScreen);
+    }
+    
     // Get channel ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const channelId = urlParams.get('id');
@@ -199,46 +241,70 @@ function setupEventListeners() {
 // Load M3U file
 async function loadChannelsFromM3U() {
     try {
-        const response = await fetch('tv.m3u');
-        const text = await response.text();
-        const lines = text.split('\n');
-        
-        let currentChannel = null;
+        channels = [];
+        allCategories.clear();
         let channelId = 1;
         
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            
-            if (!line) continue;
-            
-            if (line.startsWith('#EXTINF:')) {
-                const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
-                const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
-                const groupTitleMatch = line.match(/group-title="([^"]*)"/);
+        // Tüm M3U dosyalarını yükle
+        for (const m3uFile of m3uFiles) {
+            try {
+                const response = await fetch(m3uFile);
+                if (!response.ok) {
+                    console.warn(`⚠️ ${m3uFile} dosyası bulunamadı, atlanıyor...`);
+                    continue;
+                }
+                const text = await response.text();
+                const lines = text.split('\n');
                 
-                const channelNameMatch = line.match(/,(.*)$/);
-                let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
+                let currentChannel = null;
+                let fileChannelCount = 0;
                 
-                const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
-                let category = groupTitle.split(' - ')[0].trim();
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (!line) continue;
+                    
+                    if (line.startsWith('#EXTINF:')) {
+                        const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
+                        const tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
+                        const groupTitleMatch = line.match(/group-title="([^"]*)"/);
+                        
+                        const channelNameMatch = line.match(/,(.*)$/);
+                        let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
+                        
+                        const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                        let category = groupTitle.split(' - ')[0].trim();
+                        
+                        // Kategoriyi ekle
+                        if (category) {
+                            allCategories.add(category);
+                        }
+                        
+                        currentChannel = {
+                            id: channelId++,
+                            name: channelName,
+                            url: '',
+                            category: category,
+                            tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
+                            tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : ''
+                        };
+                    }
+                    else if ((line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) && currentChannel) {
+                        currentChannel.url = line;
+                        channels.push(currentChannel);
+                        fileChannelCount++;
+                        currentChannel = null;
+                    }
+                }
                 
-                currentChannel = {
-                    id: channelId++,
-                    name: channelName,
-                    url: '',
-                    category: category,
-                    tvgId: tvgIdMatch ? tvgIdMatch[1] : '',
-                    tvgLogo: tvgLogoMatch ? tvgLogoMatch[1] : ''
-                };
-            }
-            else if ((line.startsWith('http://') || line.startsWith('https://')) && currentChannel) {
-                currentChannel.url = line;
-                channels.push(currentChannel);
-                currentChannel = null;
+                console.log(`✅ ${m3uFile}: ${fileChannelCount} kanal eklendi`);
+            } catch (fileError) {
+                console.warn(`⚠️ ${m3uFile} yüklenirken hata:`, fileError);
             }
         }
         
-        console.log(`✅ ${channels.length} kanal yüklendi!`);
+        console.log(`✅ Toplam ${channels.length} kanal yüklendi!`);
+        console.log(`✅ ${allCategories.size} kategori bulundu:`, Array.from(allCategories).sort());
     } catch (error) {
         console.error('M3U dosyası yüklenemedi:', error);
         showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');

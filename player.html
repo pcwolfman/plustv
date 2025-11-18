@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlusTV - Video Player</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <div class="player-page">
+        <!-- Alt Bar: Sidebar + Player -->
+        <div class="player-content-wrapper">
+            <!-- Sol Sidebar - Kanallar Listesi (Kategori Yüksekliği Kadar) -->
+            <aside class="player-sidebar">
+                <div class="sidebar-header">
+                    <button class="back-btn" id="backBtn" title="Ana Sayfaya Dön">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        <span>Geri</span>
+                    </button>
+                    <h3 id="sidebarCategoryTitle">Kanallar</h3>
+                </div>
+                
+                <div class="sidebar-tabs">
+                    <button class="tab-btn active" data-tab="channels">Kanallar</button>
+                    <button class="tab-btn" data-tab="favorites">⭐ Favoriler</button>
+                </div>
+                
+                <div class="channels-sidebar-list" id="channelsSidebarList">
+                    <!-- Kanallar buraya eklenecek -->
+                </div>
+            </aside>
+
+            <!-- Ana Video Player Alanı -->
+            <main class="player-main">
+            <!-- Kategoriler Bölümü -->
+            <section class="player-categories-section">
+                <div class="player-categories-container">
+                    <div class="category-card" data-category="all">
+                        <div class="category-icon">📺</div>
+                        <div class="category-name">Tümü</div>
+                    </div>
+                    <div class="category-card" data-category="Ulusal">
+                        <div class="category-icon">📡</div>
+                        <div class="category-name">Ulusal</div>
+                    </div>
+                    <div class="category-card" data-category="Haber">
+                        <div class="category-icon">📰</div>
+                        <div class="category-name">Haber</div>
+                    </div>
+                    <div class="category-card" data-category="Spor">
+                        <div class="category-icon">⚽</div>
+                        <div class="category-name">Spor</div>
+                    </div>
+                    <div class="category-card" data-category="Eglence">
+                        <div class="category-icon">🎭</div>
+                        <div class="category-name">Eğlence</div>
+                    </div>
+                    <div class="category-card" data-category="Muzik">
+                        <div class="category-icon">🎵</div>
+                        <div class="category-name">Müzik</div>
+                    </div>
+                    <div class="category-card" data-category="Belgesel">
+                        <div class="category-icon">🎬</div>
+                        <div class="category-name">Belgesel</div>
+                    </div>
+                    <div class="category-card" data-category="Dini">
+                        <div class="category-icon">🕌</div>
+                        <div class="category-name">Dini</div>
+                    </div>
+                    <div class="category-card" data-category="Cocuk">
+                        <div class="category-icon">👶</div>
+                        <div class="category-name">Çocuk</div>
+                    </div>
+                    <div class="category-card" data-category="Ekonomi">
+                        <div class="category-icon">💰</div>
+                        <div class="category-name">Ekonomi</div>
+                    </div>
+                    <div class="category-card" data-category="Yurt Disi">
+                        <div class="category-icon">🌍</div>
+                        <div class="category-name">Yurt Dışı</div>
+                    </div>
+                    <div class="category-card" data-category="Radyo Canlı">
+                        <div class="category-icon">📻</div>
+                        <div class="category-name">Radyo Canlı</div>
+                    </div>
+                </div>
+            </section>
+            <div class="video-container-player" id="videoContainerPlayer">
+                <div class="video-placeholder-player" id="videoPlaceholderPlayer">
+                    <div class="placeholder-content">
+                        <div class="placeholder-icon">📺</div>
+                        <h2>Bir Kanal Seçin</h2>
+                        <p>Sol taraftaki listeden bir kanal seçin</p>
+                        <a href="https://t.me/carautoplus" target="_blank" rel="noopener noreferrer" class="telegram-link">t.me/carautoplus</a>
+                        <p class="brand-name">Auto Car Plus</p>
+                    </div>
+                </div>
+                <div class="loading-overlay" id="loadingPlayer">
+                    <div class="spinner"></div>
+                    <p>Yükleniyor...</p>
+                </div>
+                <video id="videoPlayer" class="video-player" controls autoplay playsinline title="PlusTV"></video>
+                <iframe id="iframePlayer" class="iframe-player" frameborder="0" allowfullscreen allow="autoplay; fullscreen; xr-spatial-tracking; encrypted-media; clipboard-write" title="PlusTV" style="display: none;"></iframe>
+            </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="player.js"></script>
+</body>
+</html>
+

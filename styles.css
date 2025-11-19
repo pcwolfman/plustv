@@ -1834,6 +1834,8 @@ body {
     min-height: 300px;
     /* Zoom uygulandığında düzgün görünmesi için */
     box-sizing: border-box;
+    /* Zoom'dan etkilenmemesi için - JavaScript ile ters scale uygulanacak */
+    will-change: transform;
 }
 
 .video-placeholder-player {
@@ -1867,6 +1869,8 @@ body {
     /* Zoom'dan etkilenmemesi için */
     min-width: 0;
     min-height: 0;
+    /* Video içeriğinin çerçeveyi en uygun şekilde doldurması için */
+    object-position: center;
 }
 
 /* Uygulama içinde video controls'u gizle */

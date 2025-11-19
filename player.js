@@ -241,6 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 playChannel(channel);
             }
         }
+        // Kategorileri render et
+        renderDynamicCategories();
         renderSidebarChannels();
         renderCategorySidebar();
     });
@@ -284,28 +286,52 @@ function applyZoom() {
         playerPage = document.querySelector('.player-page');
     }
     if (playerPage) {
-        // Zoom'u player-page'e uygula
-        playerPage.style.transform = `scale(${zoomLevel})`;
-        playerPage.style.transformOrigin = 'top left';
-        
-        // Container genişliğini ayarla
-        const scalePercent = (1 / zoomLevel) * 100;
-        playerPage.style.width = `${scalePercent}%`;
-        playerPage.style.height = `${scalePercent}%`;
-        
-        // Video container'ın responsive olması için min-height'i zoom'a göre ayarla
+        const playerContentWrapper = document.querySelector('.player-content-wrapper');
         const videoContainer = document.querySelector('.video-container-player');
-        if (videoContainer) {
-            // Video container'ın minimum yüksekliğini zoom'a göre ayarla
-            // Zoom küçüldükçe container daha küçük olabilir, ama minimum bir değer koru
-            const baseMinHeight = 300; // Base minimum height
-            const adjustedMinHeight = baseMinHeight * zoomLevel;
-            videoContainer.style.minHeight = `${Math.max(adjustedMinHeight, 200)}px`;
-            
-            console.log('Zoom applied:', zoomLevel, 'video container min-height:', videoContainer.style.minHeight);
-        }
+        const playerMain = document.querySelector('.player-main');
         
-        console.log('Zoom applied:', zoomLevel, 'to playerPage');
+        if (playerContentWrapper && videoContainer && playerMain) {
+            // Zoom'u sadece content wrapper'a uygula (sidebar ve kategoriler için)
+            // Video container zoom'dan muaf tutulacak
+            playerContentWrapper.style.transform = `scale(${zoomLevel})`;
+            playerContentWrapper.style.transformOrigin = 'top left';
+            
+            // Container genişliğini ayarla
+            const scalePercent = (1 / zoomLevel) * 100;
+            playerContentWrapper.style.width = `${scalePercent}%`;
+            playerContentWrapper.style.height = `${scalePercent}%`;
+            
+            // Player page'in boyutlarını koru
+            playerPage.style.transform = 'none';
+            playerPage.style.width = '100%';
+            playerPage.style.height = '100vh';
+            
+            // Video container'ı zoom'dan muaf tut - ters scale uygula
+            // Böylece video container her zaman tam boyutta kalır
+            const inverseScale = 1 / zoomLevel;
+            videoContainer.style.transform = `scale(${inverseScale})`;
+            videoContainer.style.transformOrigin = 'center center';
+            
+            // Video container'ın gerçek boyutlarını koru
+            videoContainer.style.width = '100%';
+            videoContainer.style.height = '100%';
+            videoContainer.style.minHeight = '300px';
+            
+            // Player main'in boyutlarını ayarla (video container için alan bırak)
+            playerMain.style.flex = '1';
+            playerMain.style.minHeight = '0';
+            playerMain.style.overflow = 'hidden';
+            
+            console.log('Zoom applied:', zoomLevel, 'to content wrapper, video container protected with inverse scale:', inverseScale);
+        } else {
+            // Fallback: Eski yöntem (tüm sayfaya zoom)
+            playerPage.style.transform = `scale(${zoomLevel})`;
+            playerPage.style.transformOrigin = 'top left';
+            const scalePercent = (1 / zoomLevel) * 100;
+            playerPage.style.width = `${scalePercent}%`;
+            playerPage.style.height = `${scalePercent}%`;
+            console.log('Zoom applied (fallback):', zoomLevel, 'to playerPage');
+        }
     } else {
         console.warn('playerPage not found for zoom application');
     }
@@ -373,6 +399,27 @@ function initializeZoom() {
     
     // Load and apply saved zoom level
     zoomLevel = loadZoomLevel();
+    
+    // Eğer zoom 1.0 ise (varsayılan), otomatik optimal zoom ayarla
+    if (zoomLevel === 1.0) {
+        const width = window.innerWidth;
+        let autoZoom = 1.0;
+        
+        if (width < 768) {
+            autoZoom = Math.min(0.9, Math.max(0.75, width / 800));
+        } else if (width >= 768 && width < 1024) {
+            autoZoom = Math.min(0.95, Math.max(0.85, width / 1000));
+        } else if (width >= 1024 && width < 1440) {
+            autoZoom = Math.min(0.95, Math.max(0.9, width / 1200));
+        }
+        
+        if (autoZoom !== 1.0) {
+            zoomLevel = autoZoom;
+            saveZoomLevel();
+            console.log('Default optimal zoom applied:', autoZoom);
+        }
+    }
+    
     applyZoom();
     updateZoomIcon();
     
@@ -383,11 +430,20 @@ function initializeZoom() {
     }
     zoomToggleBtn = newBtn;
     
-    // Event listener ekle
+    // Event listener ekle - uygulama modunda da çalışması için
     zoomToggleBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         console.log('Zoom button clicked, current zoom:', zoomLevel);
+        toggleZoom();
+        return false;
+    });
+    
+    // Touch event'leri de ekle (mobil/uygulama için)
+    zoomToggleBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Zoom button touched, current zoom:', zoomLevel);
         toggleZoom();
         return false;
     });
@@ -413,30 +469,35 @@ function setupResponsiveZoom() {
         const width = window.innerWidth;
         const height = window.innerHeight;
         
-        // Küçük ekranlar için otomatik zoom
-        if (width < 768) {
-            // Mobil cihazlar için zoom seviyesini kontrol et
-            // Eğer kullanıcı manuel zoom yapmışsa, onu koru
-            const savedZoom = loadZoomLevel();
-            if (savedZoom === 1.0) {
-                // Kullanıcı zoom yapmamışsa, küçük ekranlar için otomatik küçült
-                const autoZoom = Math.min(0.9, Math.max(0.8, width / 800));
-                if (Math.abs(autoZoom - zoomLevel) > 0.05) {
-                    zoomLevel = autoZoom;
-                    applyZoom();
-                    updateZoomIcon();
-                }
+        // Varsayılan ölçek: Ekran boyutuna göre en uygun zoom seviyesini hesapla
+        const savedZoom = loadZoomLevel();
+        
+        // Eğer kullanıcı manuel zoom yapmamışsa (1.0 ise), otomatik ayarla
+        if (savedZoom === 1.0) {
+            let autoZoom = 1.0;
+            
+            // Küçük ekranlar için otomatik zoom
+            if (width < 768) {
+                // Mobil: Ekran genişliğine göre optimal zoom
+                autoZoom = Math.min(0.9, Math.max(0.75, width / 800));
+            } else if (width >= 768 && width < 1024) {
+                // Tablet: Ekran genişliğine göre optimal zoom
+                autoZoom = Math.min(0.95, Math.max(0.85, width / 1000));
+            } else if (width >= 1024 && width < 1440) {
+                // Küçük laptop: Biraz küçült
+                autoZoom = Math.min(0.95, Math.max(0.9, width / 1200));
+            } else {
+                // Büyük ekranlar: Normal boyut
+                autoZoom = 1.0;
             }
-        } else if (width >= 768 && width < 1024) {
-            // Tablet için
-            const savedZoom = loadZoomLevel();
-            if (savedZoom === 1.0) {
-                const autoZoom = Math.min(0.95, Math.max(0.85, width / 1000));
-                if (Math.abs(autoZoom - zoomLevel) > 0.05) {
-                    zoomLevel = autoZoom;
-                    applyZoom();
-                    updateZoomIcon();
-                }
+            
+            // Zoom seviyesini ayarla ve kaydet
+            if (Math.abs(autoZoom - zoomLevel) > 0.01) {
+                zoomLevel = autoZoom;
+                saveZoomLevel();
+                applyZoom();
+                updateZoomIcon();
+                console.log('Auto zoom applied:', autoZoom, 'for screen width:', width);
             }
         }
     }
@@ -721,8 +782,10 @@ async function loadChannelsFromM3U() {
         console.log(`✅ Toplam ${channels.length} kanal yüklendi!`);
         console.log(`✅ ${allCategories.size} kategori bulundu:`, Array.from(allCategories).sort());
         
-        // Render dynamic categories (anasayfa ile aynı)
-        renderDynamicCategories();
+        // Render dynamic categories (anasayfa ile aynı) - DOM hazır olduğunda
+        setTimeout(() => {
+            renderDynamicCategories();
+        }, 100);
     } catch (error) {
         console.error('M3U dosyası yüklenemedi:', error);
         showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');

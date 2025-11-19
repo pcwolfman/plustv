@@ -70,6 +70,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'purple';
     document.documentElement.setAttribute('data-theme', savedTheme);
     
+    // Video player controls ayarı
+    // Uygulama içinde değilse (normal tarayıcı) controls göster
+    // Uygulama içinde ise (standalone/PWA) uygulamanın player çubuğu kullanılır
+    const isStandalone = window.navigator.standalone || 
+                         window.matchMedia('(display-mode: standalone)').matches ||
+                         document.referrer.includes('android-app://');
+    
+    if (videoPlayer) {
+        // Uygulama içinde değilse controls göster
+        if (!isStandalone) {
+            videoPlayer.controls = true;
+        } else {
+            videoPlayer.controls = false;
+        }
+    }
+    
     // Detect Tesla screen and orientation
     detectTeslaScreen();
     

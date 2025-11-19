@@ -25,6 +25,77 @@ function normalizeCategory(category) {
     return category;
 }
 
+// Uygulama içinde olup olmadığını kontrol et
+function isInApp() {
+    // iOS Safari standalone mode
+    if (window.navigator.standalone === true) {
+        return true;
+    }
+    
+    // PWA standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        return true;
+    }
+    
+    // Fullscreen mode
+    if (window.matchMedia('(display-mode: fullscreen)').matches) {
+        return true;
+    }
+    
+    // Android app
+    if (document.referrer.includes('android-app://')) {
+        return true;
+    }
+    
+    // File protocol
+    if (window.location.protocol === 'file:') {
+        return true;
+    }
+    
+    // No browser UI (window dimensions check)
+    const heightDiff = window.outerHeight - window.innerHeight;
+    const widthDiff = window.outerWidth - window.innerWidth;
+    if (heightDiff < 5 && widthDiff < 5 && heightDiff >= 0 && widthDiff >= 0) {
+        return true;
+    }
+    
+    // User agent check for mobile apps
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    if (/android/i.test(ua) && !/chrome/i.test(ua) && !/firefox/i.test(ua)) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Video player controls'u ayarla
+function setupVideoControls() {
+    if (!videoPlayer) return;
+    
+    const inApp = isInApp();
+    console.log('Uygulama içinde mi?', inApp);
+    
+    if (inApp) {
+        // Uygulama içinde: controls'u tamamen kapat
+        videoPlayer.controls = false;
+        videoPlayer.removeAttribute('controls');
+        // Data attribute ile işaretle
+        videoPlayer.setAttribute('data-in-app', 'true');
+        // Native controls'u tamamen devre dışı bırak
+        videoPlayer.setAttribute('controlsList', 'nodownload noplaybackrate nofullscreen noremoteplayback');
+        // CSS ile de gizle
+        videoPlayer.classList.add('no-controls');
+        console.log('Video controls kapatıldı (uygulama modu)');
+    } else {
+        // Normal tarayıcı: controls göster
+        videoPlayer.controls = true;
+        videoPlayer.removeAttribute('controlsList');
+        videoPlayer.removeAttribute('data-in-app');
+        videoPlayer.classList.remove('no-controls');
+        console.log('Video controls açıldı (tarayıcı modu)');
+    }
+}
+
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
 const sidebarCategoryTitle = document.getElementById('sidebarCategoryTitle');
@@ -71,20 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
     
     // Video player controls ayarı
-    // Uygulama içinde değilse (normal tarayıcı) controls göster
-    // Uygulama içinde ise (standalone/PWA) uygulamanın player çubuğu kullanılır
-    const isStandalone = window.navigator.standalone || 
-                         window.matchMedia('(display-mode: standalone)').matches ||
-                         document.referrer.includes('android-app://');
-    
-    if (videoPlayer) {
-        // Uygulama içinde değilse controls göster
-        if (!isStandalone) {
-            videoPlayer.controls = true;
-        } else {
-            videoPlayer.controls = false;
-        }
-    }
+    setupVideoControls();
     
     // Detect Tesla screen and orientation
     detectTeslaScreen();
@@ -572,6 +630,8 @@ function playChannel(channel) {
     document.title = `${channel.name} - PlusTV`;
     if (videoPlayer) {
         videoPlayer.title = channel.name;
+        // Controls'u tekrar ayarla (uygulama içinde olabilir)
+        setupVideoControls();
     }
     
     // Update active channel in sidebar (optimized)
@@ -628,6 +688,9 @@ function playM3U8(url) {
     // Video element'ini optimize et
     videoPlayer.preload = 'auto';
     videoPlayer.playsInline = true;
+    
+    // Controls'u ayarla (uygulama içinde olabilir)
+    setupVideoControls();
     
     if (typeof Hls === 'undefined') {
         showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
@@ -726,6 +789,9 @@ function playM3U8(url) {
             if (loadingPlayer) loadingPlayer.classList.remove('active');
             if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
             
+            // Controls'u tekrar ayarla (video yüklendiğinde)
+            setupVideoControls();
+            
             videoPlayer.play().catch(err => {
                 console.error('Playback error:', err);
                 showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
@@ -792,12 +858,17 @@ function playM3U8(url) {
         }, 10000); // 10 saniye timeout (15'ten 10'a düşürüldü)
         
     } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+        // Controls'u ayarla (Safari için)
+        setupVideoControls();
+        
         videoPlayer.src = url;
         
         // Safari için loading'i daha erken kaldırmak için canplay event'ini dinle
         const canPlayHandler = () => {
             if (loadingPlayer) loadingPlayer.classList.remove('active');
             if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
+            // Controls'u tekrar ayarla
+            setupVideoControls();
             videoPlayer.removeEventListener('canplay', canPlayHandler);
             if (safariTimeout) {
                 clearTimeout(safariTimeout);

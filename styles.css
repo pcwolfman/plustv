@@ -1673,6 +1673,45 @@ body {
     max-height: 100%;
 }
 
+/* Uygulama içinde video controls'u gizle */
+.video-player.no-controls::-webkit-media-controls,
+.video-player.no-controls::-webkit-media-controls-panel,
+.video-player.no-controls::-webkit-media-controls-play-button,
+.video-player.no-controls::-webkit-media-controls-timeline,
+.video-player.no-controls::-webkit-media-controls-current-time-display,
+.video-player.no-controls::-webkit-media-controls-time-remaining-display,
+.video-player.no-controls::-webkit-media-controls-mute-button,
+.video-player.no-controls::-webkit-media-controls-volume-slider,
+.video-player.no-controls::-webkit-media-controls-fullscreen-button,
+.video-player[data-in-app="true"]::-webkit-media-controls,
+.video-player[data-in-app="true"]::-webkit-media-controls-panel,
+.video-player[data-in-app="true"]::-webkit-media-controls-play-button,
+.video-player[data-in-app="true"]::-webkit-media-controls-timeline,
+.video-player[data-in-app="true"]::-webkit-media-controls-current-time-display,
+.video-player[data-in-app="true"]::-webkit-media-controls-time-remaining-display,
+.video-player[data-in-app="true"]::-webkit-media-controls-mute-button,
+.video-player[data-in-app="true"]::-webkit-media-controls-volume-slider,
+.video-player[data-in-app="true"]::-webkit-media-controls-fullscreen-button {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+}
+
+/* Video element'inin kendisinde de controls gizleme */
+.video-player.no-controls,
+.video-player[data-in-app="true"] {
+    -webkit-appearance: none;
+}
+
+/* Tüm media controls'u gizle */
+.video-player.no-controls video::-webkit-media-controls-enclosure,
+.video-player[data-in-app="true"] video::-webkit-media-controls-enclosure {
+    display: none !important;
+}
+
 /* Küçük ekranlarda video player responsive */
 @media (max-width: 768px) {
     .video-container-player {

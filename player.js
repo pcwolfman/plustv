@@ -291,31 +291,47 @@ function applyZoom() {
         const playerMain = document.querySelector('.player-main');
         
         if (playerContentWrapper && videoContainer && playerMain) {
-            // Zoom'u sadece content wrapper'a uygula (sidebar ve kategoriler için)
-            // Video container zoom'dan muaf tutulacak
-            playerContentWrapper.style.transform = `scale(${zoomLevel})`;
-            playerContentWrapper.style.transformOrigin = 'top left';
+            // Zoom'u sadece sidebar ve kategorilere uygula
+            // Video container zoom'dan tamamen muaf tutulacak
+            const sidebar = document.querySelector('.player-sidebar');
+            const categoriesSection = document.querySelector('.player-categories-section');
             
-            // Container genişliğini ayarla
-            const scalePercent = (1 / zoomLevel) * 100;
-            playerContentWrapper.style.width = `${scalePercent}%`;
-            playerContentWrapper.style.height = `${scalePercent}%`;
+            // Sidebar ve kategorilere zoom uygula
+            if (sidebar) {
+                sidebar.style.transform = `scale(${zoomLevel})`;
+                sidebar.style.transformOrigin = 'top left';
+            }
+            if (categoriesSection) {
+                categoriesSection.style.transform = `scale(${zoomLevel})`;
+                categoriesSection.style.transformOrigin = 'top left';
+            }
+            
+            // Content wrapper'a zoom uygulama (video container'ı korumak için)
+            playerContentWrapper.style.transform = 'none';
+            playerContentWrapper.style.width = '100%';
+            playerContentWrapper.style.height = '100%';
             
             // Player page'in boyutlarını koru
             playerPage.style.transform = 'none';
             playerPage.style.width = '100%';
             playerPage.style.height = '100vh';
             
-            // Video container'ı zoom'dan muaf tut - ters scale uygula
-            // Böylece video container her zaman tam boyutta kalır
-            const inverseScale = 1 / zoomLevel;
-            videoContainer.style.transform = `scale(${inverseScale})`;
-            videoContainer.style.transformOrigin = 'center center';
-            
-            // Video container'ın gerçek boyutlarını koru
+            // Video container'ı zoom'dan tamamen muaf tut
+            videoContainer.style.transform = 'none';
             videoContainer.style.width = '100%';
             videoContainer.style.height = '100%';
+            videoContainer.style.maxWidth = '100%';
+            videoContainer.style.maxHeight = '100%';
             videoContainer.style.minHeight = '300px';
+            videoContainer.style.overflow = 'hidden';
+            videoContainer.style.boxSizing = 'border-box';
+            
+            // Player main'in boyutlarını ayarla
+            playerMain.style.flex = '1';
+            playerMain.style.minHeight = '0';
+            playerMain.style.overflow = 'hidden';
+            playerMain.style.width = '100%';
+            playerMain.style.height = '100%';
             
             // Player main'in boyutlarını ayarla (video container için alan bırak)
             playerMain.style.flex = '1';

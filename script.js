@@ -173,8 +173,13 @@ async function loadChannelsFromM3U() {
                         // Clean category name (remove " - Yurt Disi" etc.)
                         let category = groupTitle.split(' - ')[0].trim();
                         
-                        // Kategoriyi ekle
-                        if (category) {
+                        // Normalize category
+                        if (categoryMapping[category]) {
+                            category = categoryMapping[category];
+                        }
+                        
+                        // Kategoriyi ekle (sadece standart kategorilere)
+                        if (category && STANDARD_CATEGORIES.some(c => c.id === category)) {
                             allCategories.add(category);
                         }
                         
@@ -246,7 +251,31 @@ const categoryIcons = {
     'Diğer': '📺'
 };
 
-// Dinamik kategori kartlarını oluştur
+// Sabit kategori listesi (player.html ile aynı)
+const STANDARD_CATEGORIES = [
+    { id: 'all', name: 'Tümü', icon: '📺' },
+    { id: 'Ulusal', name: 'Ulusal', icon: '📡' },
+    { id: 'Haber', name: 'Haber', icon: '📰' },
+    { id: 'Spor', name: 'Spor', icon: '⚽' },
+    { id: 'Eğlence', name: 'Eğlence', icon: '🎭' },
+    { id: 'Müzik', name: 'Müzik', icon: '🎵' },
+    { id: 'Belgesel', name: 'Belgesel', icon: '🎬' },
+    { id: 'Dini', name: 'Dini', icon: '🕌' },
+    { id: 'Çocuk', name: 'Çocuk', icon: '👶' },
+    { id: 'Ekonomi', name: 'Ekonomi', icon: '💰' },
+    { id: 'Yurt Dışı', name: 'Yurt Dışı', icon: '🌍' },
+    { id: 'Radyo Canlı', name: 'Radyo Canlı', icon: '📻' }
+];
+
+// Kategori eşleştirme (eski -> yeni)
+const categoryMapping = {
+    'Eglence': 'Eğlence',
+    'Muzik': 'Müzik',
+    'Cocuk': 'Çocuk',
+    'Yurt Disi': 'Yurt Dışı'
+};
+
+// Dinamik kategori kartlarını oluştur (sadece standart kategoriler)
 function renderDynamicCategories() {
     const categoriesContainer = document.querySelector('.categories-container');
     if (!categoriesContainer) return;
@@ -255,22 +284,34 @@ function renderDynamicCategories() {
     const existingCards = categoriesContainer.querySelectorAll('.category-card:not([data-category="all"])');
     existingCards.forEach(card => card.remove());
     
-    // Kategorileri sırala
-    const sortedCategories = Array.from(allCategories).sort();
-    
-    // Her kategori için kart oluştur
-    sortedCategories.forEach(category => {
+    // Sadece standart kategorileri göster
+    STANDARD_CATEGORIES.forEach(cat => {
+        // Kategoride kanal var mı kontrol et
+        const hasChannels = channels.some(ch => {
+            let chCategory = ch.category;
+            // Eşleştirme uygula
+            if (categoryMapping[chCategory]) {
+                chCategory = categoryMapping[chCategory];
+            }
+            return chCategory === cat.id;
+        });
+        
+        // Eğer kanal yoksa ve "Tümü" değilse atla
+        if (!hasChannels && cat.id !== 'all') {
+            return;
+        }
+        
         const categoryCard = document.createElement('div');
         categoryCard.className = 'category-card';
-        categoryCard.dataset.category = category;
+        categoryCard.dataset.category = cat.id;
         
         const icon = document.createElement('div');
         icon.className = 'category-icon';
-        icon.textContent = categoryIcons[category] || '📺';
+        icon.textContent = cat.icon;
         
         const name = document.createElement('div');
         name.className = 'category-name';
-        name.textContent = category;
+        name.textContent = cat.name;
         
         categoryCard.appendChild(icon);
         categoryCard.appendChild(name);
@@ -324,13 +365,24 @@ function selectCategory(category) {
     renderChannels();
 }
 
+// Kategoriyi normalize et
+function normalizeCategory(category) {
+    if (categoryMapping[category]) {
+        return categoryMapping[category];
+    }
+    return category;
+}
+
 // Render Channels (optimized)
 function renderChannels() {
     let filteredChannels = channels;
     
     // Filter by category
     if (currentCategory !== 'all') {
-        filteredChannels = channels.filter(ch => ch.category === currentCategory);
+        filteredChannels = channels.filter(ch => {
+            let chCategory = normalizeCategory(ch.category);
+            return chCategory === currentCategory;
+        });
     }
     
     // Filter by search (optimized with early return)
@@ -348,13 +400,13 @@ function renderChannels() {
         'Ulusal': 'Ulusal Kanallar',
         'Haber': 'Haber Kanalları',
         'Spor': 'Spor Kanalları',
-        'Eglence': 'Eğlence Kanalları',
-        'Muzik': 'Müzik Kanalları',
+        'Eğlence': 'Eğlence Kanalları',
+        'Müzik': 'Müzik Kanalları',
         'Belgesel': 'Belgesel Kanalları',
         'Dini': 'Dini Kanallar',
-        'Cocuk': 'Çocuk Kanalları',
+        'Çocuk': 'Çocuk Kanalları',
         'Ekonomi': 'Ekonomi Kanalları',
-        'Yurt Disi': 'Yurt Dışı Kanallar',
+        'Yurt Dışı': 'Yurt Dışı Kanallar',
         'Radyo Canlı': 'Radyo Canlı'
     };
     

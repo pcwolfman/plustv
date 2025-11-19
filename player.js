@@ -9,6 +9,22 @@ let hlsInstance = null; // Track HLS instance
 let allCategories = new Set(); // Tüm kategorileri tutmak için
 const m3uFiles = ['tv.m3u', 'tr.m3u']; // Yüklenecek M3U dosyaları
 
+// Kategori eşleştirme (eski -> yeni)
+const categoryMapping = {
+    'Eglence': 'Eğlence',
+    'Muzik': 'Müzik',
+    'Cocuk': 'Çocuk',
+    'Yurt Disi': 'Yurt Dışı'
+};
+
+// Kategoriyi normalize et
+function normalizeCategory(category) {
+    if (categoryMapping[category]) {
+        return categoryMapping[category];
+    }
+    return category;
+}
+
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
 const sidebarCategoryTitle = document.getElementById('sidebarCategoryTitle');
@@ -275,6 +291,9 @@ async function loadChannelsFromM3U() {
                         const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
                         let category = groupTitle.split(' - ')[0].trim();
                         
+                        // Normalize category
+                        category = normalizeCategory(category);
+                        
                         // Kategoriyi ekle
                         if (category) {
                             allCategories.add(category);
@@ -323,7 +342,10 @@ function renderSidebarChannels() {
         if (currentCategory === 'all') {
             filteredChannels = channels;
         } else {
-            filteredChannels = channels.filter(ch => ch.category === currentCategory);
+            filteredChannels = channels.filter(ch => {
+                const chCategory = normalizeCategory(ch.category);
+                return chCategory === currentCategory;
+            });
         }
         
         const categoryNames = {
@@ -331,13 +353,13 @@ function renderSidebarChannels() {
             'Ulusal': 'Ulusal Kanallar',
             'Haber': 'Haber Kanalları',
             'Spor': 'Spor Kanalları',
-            'Eglence': 'Eğlence Kanalları',
-            'Muzik': 'Müzik Kanalları',
+            'Eğlence': 'Eğlence Kanalları',
+            'Müzik': 'Müzik Kanalları',
             'Belgesel': 'Belgesel Kanalları',
             'Dini': 'Dini Kanallar',
-            'Cocuk': 'Çocuk Kanalları',
+            'Çocuk': 'Çocuk Kanalları',
             'Ekonomi': 'Ekonomi Kanalları',
-            'Yurt Disi': 'Yurt Dışı Kanallar',
+            'Yurt Dışı': 'Yurt Dışı Kanallar',
             'Radyo Canlı': 'Radyo Canlı'
         };
         sidebarCategoryTitle.textContent = categoryNames[currentCategory] || 'Kanallar';
@@ -472,19 +494,19 @@ function renderSidebarChannels() {
 function renderCategorySidebar() {
     if (!categorySidebarList) return;
     
-    const categories = ['all', 'Ulusal', 'Haber', 'Spor', 'Eglence', 'Muzik', 'Belgesel', 'Dini', 'Cocuk', 'Ekonomi', 'Yurt Disi', 'Radyo Canlı'];
+    const categories = ['all', 'Ulusal', 'Haber', 'Spor', 'Eğlence', 'Müzik', 'Belgesel', 'Dini', 'Çocuk', 'Ekonomi', 'Yurt Dışı', 'Radyo Canlı'];
     const categoryNames = {
         'all': 'Tümü',
         'Ulusal': 'Ulusal',
         'Haber': 'Haber',
         'Spor': 'Spor',
-        'Eglence': 'Eğlence',
-        'Muzik': 'Müzik',
+        'Eğlence': 'Eğlence',
+        'Müzik': 'Müzik',
         'Belgesel': 'Belgesel',
         'Dini': 'Dini',
-        'Cocuk': 'Çocuk',
+        'Çocuk': 'Çocuk',
         'Ekonomi': 'Ekonomi',
-        'Yurt Disi': 'Yurt Dışı',
+        'Yurt Dışı': 'Yurt Dışı',
         'Radyo Canlı': 'Radyo Canlı'
     };
     
@@ -550,10 +572,6 @@ function playChannel(channel) {
         }
     });
     
-    // Show loading
-    videoPlaceholderPlayer.style.display = 'flex';
-    loadingPlayer.classList.add('active');
-    
     // Cleanup previous playback
     cleanup();
     
@@ -564,12 +582,21 @@ function playChannel(channel) {
     
     // Play video
     if (channel.url.includes('.m3u8')) {
+        // M3U8 için loading göster
+        videoPlaceholderPlayer.style.display = 'flex';
+        loadingPlayer.classList.add('active');
         playM3U8(channel.url);
     } else if (channel.url.includes('youtube.com') || channel.url.includes('youtu.be')) {
+        // YouTube linkleri için loading'i gösterme (iframe hızlı yüklenir)
+        videoPlaceholderPlayer.style.display = 'none';
+        loadingPlayer.classList.remove('active');
         // YouTube linklerini embed formatına çevir
         const youtubeUrl = convertYouTubeToEmbed(channel.url);
         playIframe(youtubeUrl);
     } else {
+        // Diğer iframe linkleri için loading göster
+        videoPlaceholderPlayer.style.display = 'flex';
+        loadingPlayer.classList.add('active');
         playIframe(channel.url);
     }
 }
@@ -581,6 +608,10 @@ function playM3U8(url) {
     if (currentChannel && videoPlayer) {
         videoPlayer.title = currentChannel.name;
     }
+    
+    // Video element'ini optimize et
+    videoPlayer.preload = 'auto';
+    videoPlayer.playsInline = true;
     
     if (typeof Hls === 'undefined') {
         showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
@@ -609,24 +640,65 @@ function playM3U8(url) {
         
         const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: false, // Disable for better stability
+            lowLatencyMode: true, // Enable for faster loading
             debug: false,
-            maxBufferLength: 30, // Limit buffer for better performance
-            maxMaxBufferLength: 60,
-            maxBufferSize: 60 * 1000 * 1000, // 60MB max buffer
+            maxBufferLength: 10, // Reduced buffer for faster start
+            maxMaxBufferLength: 20,
+            maxBufferSize: 30 * 1000 * 1000, // 30MB max buffer (reduced for faster start)
+            startLevel: -1, // Auto start level
+            capLevelToPlayerSize: true, // Auto adjust quality
+            startFragPrefetch: true, // Prefetch first fragment
+            testBandwidth: false, // Disable bandwidth testing for faster start
+            progressive: false, // Use HLS.js instead of native
             xhrSetup: function(xhr, url) {
                 xhr.withCredentials = false;
+                // Set timeout for faster failure detection
+                xhr.timeout = 8000; // 8 seconds timeout
             }
         });
         
         hlsInstance = hls;
         videoPlayer.hls = hls;
         
+        // VideoPlayer'ı temizle ve optimize et
+        videoPlayer.src = '';
+        videoPlayer.load();
+        
+        // HLS'yi yükle
         hls.loadSource(url);
         hls.attachMedia(videoPlayer);
         
         let manifestParsed = false;
         let timeout;
+        
+        // Loading'i daha erken kaldırmak için fragment loading event'lerini dinle
+        let firstFragmentLoaded = false;
+        hls.on(Hls.Events.FRAG_LOADED, () => {
+            // İlk fragment yüklendiğinde loading'i kaldır
+            if (!firstFragmentLoaded && loadingPlayer && loadingPlayer.classList.contains('active')) {
+                firstFragmentLoaded = true;
+                loadingPlayer.classList.remove('active');
+                if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
+            }
+        });
+        
+        hls.on(Hls.Events.LEVEL_LOADED, () => {
+            // Level yüklendiğinde de loading'i kaldır (fallback)
+            if (loadingPlayer && loadingPlayer.classList.contains('active')) {
+                loadingPlayer.classList.remove('active');
+                if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
+            }
+        });
+        
+        // VideoPlayer'ın canplay event'ini dinle (daha erken loading kaldırma)
+        const canPlayHandler = () => {
+            if (loadingPlayer && loadingPlayer.classList.contains('active')) {
+                loadingPlayer.classList.remove('active');
+                if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
+            }
+            videoPlayer.removeEventListener('canplay', canPlayHandler);
+        };
+        videoPlayer.addEventListener('canplay', canPlayHandler);
         
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             manifestParsed = true;
@@ -634,13 +706,14 @@ function playM3U8(url) {
                 clearTimeout(timeout);
                 activeTimeouts = activeTimeouts.filter(t => t !== timeout);
             }
-            videoPlayer.play().catch(err => {
-                console.error('Playback error:', err);
-                if (loadingPlayer) loadingPlayer.classList.remove('active');
-                showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
-            });
+            // Loading'i kaldır
             if (loadingPlayer) loadingPlayer.classList.remove('active');
             if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
+            
+            videoPlayer.play().catch(err => {
+                console.error('Playback error:', err);
+                showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
+            });
         });
         
         hls.on(Hls.Events.ERROR, (event, data) => {
@@ -700,19 +773,33 @@ function playM3U8(url) {
                 }
                 showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
             }
-        }, 15000);
+        }, 10000); // 10 saniye timeout (15'ten 10'a düşürüldü)
         
     } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
         videoPlayer.src = url;
+        
+        // Safari için loading'i daha erken kaldırmak için canplay event'ini dinle
+        const canPlayHandler = () => {
+            if (loadingPlayer) loadingPlayer.classList.remove('active');
+            if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
+            videoPlayer.removeEventListener('canplay', canPlayHandler);
+            if (safariTimeout) {
+                clearTimeout(safariTimeout);
+                activeTimeouts = activeTimeouts.filter(t => t !== safariTimeout);
+            }
+        };
+        videoPlayer.addEventListener('canplay', canPlayHandler);
+        
         const playPromise = videoPlayer.play();
         
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                loadingPlayer.classList.remove('active');
-                videoPlaceholderPlayer.style.display = 'none';
+                // Play başarılı olduğunda loading'i kaldır
+                if (loadingPlayer) loadingPlayer.classList.remove('active');
+                if (videoPlaceholderPlayer) videoPlaceholderPlayer.style.display = 'none';
             }).catch(err => {
                 console.error('Playback error:', err);
-                loadingPlayer.classList.remove('active');
+                if (loadingPlayer) loadingPlayer.classList.remove('active');
                 showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
             });
         }
@@ -722,11 +809,13 @@ function playM3U8(url) {
                 if (loadingPlayer) loadingPlayer.classList.remove('active');
                 showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
             }
-        }, 15000);
+        }, 10000); // 10 saniye timeout (15'ten 10'a düşürüldü)
         
         const loadedDataHandler = () => {
-            clearTimeout(safariTimeout);
-            activeTimeouts = activeTimeouts.filter(t => t !== safariTimeout);
+            if (safariTimeout) {
+                clearTimeout(safariTimeout);
+                activeTimeouts = activeTimeouts.filter(t => t !== safariTimeout);
+            }
             videoPlayer.removeEventListener('loadeddata', loadedDataHandler);
         };
         videoPlayer.addEventListener('loadeddata', loadedDataHandler, { once: true });
@@ -759,7 +848,8 @@ function convertYouTubeToEmbed(url) {
     if (videoId) {
         // URL parametrelerini temizle (list, start_radio vb.)
         videoId = videoId.split('&')[0].split('?')[0];
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+        // YouTube embed URL'ini optimize et: autoplay, rel=0, modestbranding, controls=1
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=1&playsinline=1&enablejsapi=1`;
     }
     
     return url;
@@ -770,11 +860,18 @@ function playIframe(url) {
     videoPlayer.style.display = 'none';
     iframePlayer.style.display = 'block';
     iframePlayer.src = url;
+    
     if (currentChannel && iframePlayer) {
         iframePlayer.title = currentChannel.name;
     }
-    loadingPlayer.classList.remove('active');
-    videoPlaceholderPlayer.style.display = 'none';
+    
+    // YouTube olmayan linkler için load event'ini bekle
+    if (!url.includes('youtube.com')) {
+        iframePlayer.onload = () => {
+            loadingPlayer.classList.remove('active');
+            videoPlaceholderPlayer.style.display = 'none';
+        };
+    }
 }
 
 // Setup double tap for fullscreen (mobile)
@@ -919,12 +1016,15 @@ function showError(message) {
     errorDiv.textContent = message;
     document.body.appendChild(errorDiv);
     
+    // Zaman aşımı mesajları 2 saniye, diğerleri 5 saniye sonra kaybolsun
+    const timeoutDuration = message.includes('zaman aşımı') ? 2000 : 5000;
+    
     const fadeTimeout = safeSetTimeout(() => {
         errorDiv.style.opacity = '0';
         errorDiv.style.transition = 'opacity 0.3s ease';
         const removeTimeout = safeSetTimeout(() => {
             errorDiv.remove();
         }, 300);
-    }, 5000);
+    }, timeoutDuration);
 }
 

@@ -7,8 +7,6 @@ https://boncuktv.atakan1983.workers.dev/trt2
 https://boncuktv.atakan1983.workers.dev/showtv
 #EXTINF:-1 group-title="Ulusal" tvg-id="StarTV.tr" tvg-logo="https://cdn.technettv.com/channel/20567/logo_256_1699960596.png" ,Star TV
 https://boncuktv.atakan1983.workers.dev/startv
-#EXTINF:-1 group-title="Ulusal" tvg-id="StarTV.tr" tvg-logo="https://cdn.technettv.com/channel/20567/logo_256_1699960596.png" ,Star TV (alternatif
-http://euroroyals.com:8080/mehmetcaliskan/9aE5bb6ac0/232
 #EXTINF:-1 group-title="Ulusal" tvg-id="KanalD.tr" tvg-logo="https://cdn.technettv.com/channel/20483/logo_256_1707397616.png" ,Kanal D
 https://boncuktv.atakan1983.workers.dev/kanald
 #EXTINF:-1 group-title="Ulusal" tvg-id="ATV.tr" tvg-logo="https://cdn.technettv.com/channel/33825/logo_256.png" ,ATV
@@ -31,8 +29,6 @@ https://boncuktv.atakan1983.workers.dev/trthaber
 https://boncuktv.atakan1983.workers.dev/anews
 #EXTINF:-1 group-title="HABER" tvg-id="NTV.tr" tvg-logo="https://cdn.technettv.com/channel/20546/logo_256_1707397575.png" ,NTV
 https://boncuktv.atakan1983.workers.dev/ntv
-#EXTINF:-1 group-title="HABER" tvg-id="CNNTurk.tr" tvg-logo="https://cdn.technettv.com/channel/22961/logo_256_1707397512.png" ,CNN Türk
-https://boncuktv.atakan1983.workers.dev/cnnt
 #EXTINF:-1 group-title="HABER" tvg-id="HalkTV.tr" tvg-logo="https://cdn.technettv.com/channel/22975/logo_256_1707397382.png" ,Halk TV
 https://boncuktv.atakan1983.workers.dev/halktv
 #EXTINF:-1 group-title="HABER" tvg-id="SZCTV.tr" tvg-logo="https://cdn.technettv.com/channel/20805/logo_256_1699966647.png" ,SZC TV
@@ -41,8 +37,6 @@ https://boncuktv.atakan1983.workers.dev/szctv
 https://boncuktv.atakan1983.workers.dev/bloomberght
 #EXTINF:-1 group-title="HABER" tvg-id="CNBCE.tr" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/b/b9/CNBC-e-Logo.png" ,CNBC-E
 https://hnpsechtsc.turknet.ercdn.net/xpnvudnlsv/cnbc-e/cnbc-e.m3u8
-#EXTINF:-1 group-title="HABER" tvg-id="Ekoturk.tr" tvg-logo="https://cdn.technettv.com/channel/33986/logo_256.jpg" ,Ekotürk
-https://boncuktv.atakan1983.workers.dev/ekoturk
 #EXTINF:-1 group-title="HABER" tvg-id="OlayTurkTV.tr" tvg-logo="https://cdn.technettv.com/channel/15219/logo_256_1699951464.png" ,Olay Türk TV
 https://boncuktv.atakan1983.workers.dev/olayturk
 #EXTINF:-1 group-title="HABER" tvg-id="ilketv.tr" tvg-logo="https://ilketv.com.tr/wp-content/uploads/2024/06/logo.png" ,İlke TV
@@ -127,8 +121,6 @@ https://boncuktv.atakan1983.workers.dev/trtcocuk
 https://tv-trtdiyanetcocuk.medya.trt.com.tr/master_720.m3u8
 #EXTINF:-1 group-title="ÇOCUK" tvg-id="MinikaGO.tr" tvg-logo="https://cdn.technettv.com/channel/33776/logo_256.png" ,Minika GO
 https://boncuktv.atakan1983.workers.dev/minikago
-#EXTINF:-1 tvg-id="minika Cocuk" tvg-logo="http://ginikoturkish.com/channels/logo/minika-cocuk.png" group-title="ÇOCUK",Minika Cocuk
-https://trn03.tulix.tv/gt-minikacocuk/index.m3u8
 #EXTINF:-1 tvg-id="DisneyJR." tvg-logo="https://www.dsmart.com.tr/api/v1/public/images/kanallar/disneyjr.png" group-title="ÇOCUK",Disney Junior
 https://saran-live.ercdn.net/disneyjunior/index.m3u8
 #EXTINF:-1 tvg-id="Babytv.tr" tvg-logo="https://upload.wikimedia.org/wikipedia/en/b/bc/BabyTV_logo.png" group-title="ÇOCUK",Baby TV
@@ -151,8 +143,6 @@ https://boncuktv.atakan1983.workers.dev/kontv
 https://boncuktv.atakan1983.workers.dev/tivi6
 #EXTINF:-1 group-title="EĞLENCE" tvg-id="Best4K.tr" tvg-logo="https://cdn.technettv.com/channel/34112/logo_256.png" ,Best TV 4K
 https://boncuktv.atakan1983.workers.dev/best4k
-#EXTINF:-1 group-title="SİNEMA" tvg-id="SinemaTV.tr" tvg-logo="https://cdn.technettv.com/channel/33965/logo_256.png" ,Sinema TV
-https://boncuktv.atakan1983.workers.dev/sinematv
 #EXTINF:-1 group-title="SİNEMA" tvg-id="FX.tr" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/FX_Logo_2023.svg/1200px-FX_Logo_2023.svg.png" ,FX
 https://saran-live.ercdn.net/fx/index.m3u8
 #EXTINF:-1 group-title="SİNEMA" tvg-id="Cine1.tr" tvg-logo="https://cdn.technettv.com/channel/20336/logo_256_1707397598.png" ,Cine 1

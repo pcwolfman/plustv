@@ -9,6 +9,49 @@ let hlsInstance = null; // Track HLS instance
 let allCategories = new Set(); // Tüm kategorileri tutmak için
 const m3uFiles = ['tv.m3u', 'tr.m3u']; // Yüklenecek M3U dosyaları
 
+// Zoom state
+let zoomLevel = 1.0; // 1.0 = normal, 0.9 = %90, 0.85 = %85, 0.8 = %80
+let zoomToggleBtn;
+let playerPage;
+
+// Kategori ikonları mapping
+const categoryIcons = {
+    'all': '📺',
+    'Ulusal': '📡',
+    'Haber': '📰',
+    'Spor': '⚽',
+    'Eglence': '🎭',
+    'Eğlence': '🎭',
+    'Muzik': '🎵',
+    'Müzik': '🎵',
+    'Belgesel': '🎬',
+    'Dini': '🕌',
+    'Cocuk': '👶',
+    'Çocuk': '👶',
+    'Ekonomi': '💰',
+    'Yurt Disi': '🌍',
+    'Yurt Dışı': '🌍',
+    'Radyo Canlı': '📻',
+    'Radyo': '📻',
+    'Diğer': '📺'
+};
+
+// Sabit kategori listesi (anasayfa ile aynı)
+const STANDARD_CATEGORIES = [
+    { id: 'all', name: 'Tümü', icon: '📺' },
+    { id: 'Ulusal', name: 'Ulusal', icon: '📡' },
+    { id: 'Haber', name: 'Haber', icon: '📰' },
+    { id: 'Spor', name: 'Spor', icon: '⚽' },
+    { id: 'Eğlence', name: 'Eğlence', icon: '🎭' },
+    { id: 'Müzik', name: 'Müzik', icon: '🎵' },
+    { id: 'Belgesel', name: 'Belgesel', icon: '🎬' },
+    { id: 'Dini', name: 'Dini', icon: '🕌' },
+    { id: 'Çocuk', name: 'Çocuk', icon: '👶' },
+    { id: 'Ekonomi', name: 'Ekonomi', icon: '💰' },
+    { id: 'Yurt Dışı', name: 'Yurt Dışı', icon: '🌍' },
+    { id: 'Radyo Canlı', name: 'Radyo Canlı', icon: '📻' }
+];
+
 // Kategori eşleştirme (eski -> yeni)
 const categoryMapping = {
     'Eglence': 'Eğlence',
@@ -19,10 +62,35 @@ const categoryMapping = {
 
 // Kategoriyi normalize et
 function normalizeCategory(category) {
+    if (!category) return 'Diğer';
+    
+    // Önce categoryMapping'e bak
     if (categoryMapping[category]) {
         return categoryMapping[category];
     }
-    return category;
+    
+    // Büyük/küçük harf duyarsız kontrol (ilk harf büyük, diğerleri küçük)
+    const categoryLower = category.toLowerCase();
+    const categoryTitleCase = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+    
+    // categoryMapping'de büyük/küçük harf varyantlarını kontrol et
+    for (const [key, value] of Object.entries(categoryMapping)) {
+        if (key.toLowerCase() === categoryLower) {
+            return value;
+        }
+    }
+    
+    // STANDARD_CATEGORIES'de büyük/küçük harf duyarsız kontrol
+    const standardCat = STANDARD_CATEGORIES.find(c => 
+        c.id.toLowerCase() === categoryLower || 
+        c.name.toLowerCase() === categoryLower
+    );
+    if (standardCat) {
+        return standardCat.id;
+    }
+    
+    // İlk harf büyük, diğerleri küçük formatına dönüştür
+    return categoryTitleCase;
 }
 
 // Uygulama içinde olup olmadığını kontrol et
@@ -99,11 +167,13 @@ function setupVideoControls() {
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
 const sidebarCategoryTitle = document.getElementById('sidebarCategoryTitle');
-const categoryCards = document.querySelectorAll('.category-card');
+let categoryCards = document.querySelectorAll('.category-card');
 const channelsSidebarList = document.getElementById('channelsSidebarList');
 const categorySidebarList = document.getElementById('categorySidebarList');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const videoPlayer = document.getElementById('videoPlayer');
+playerPage = document.querySelector('.player-page');
+zoomToggleBtn = document.getElementById('zoomToggleBtn');
 const iframePlayer = document.getElementById('iframePlayer');
 const videoContainerPlayer = document.getElementById('videoContainerPlayer');
 const videoPlaceholderPlayer = document.getElementById('videoPlaceholderPlayer');
@@ -176,7 +246,250 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     setupEventListeners();
+    
+    // Initialize zoom - DOM tamamen yüklendikten sonra
+    // Önce hemen dene, sonra bir kez daha dene
+    initializeZoom();
+    setTimeout(() => {
+        initializeZoom();
+    }, 300);
 });
+
+// Zoom Functions
+function loadZoomLevel() {
+    try {
+        const stored = localStorage.getItem('plusTv_zoomLevel');
+        return stored ? parseFloat(stored) : 1.0;
+    } catch (e) {
+        return 1.0;
+    }
+}
+
+function saveZoomLevel() {
+    try {
+        localStorage.setItem('plusTv_zoomLevel', zoomLevel.toString());
+        // Storage event'i tetikle (diğer sayfalar için)
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'plusTv_zoomLevel',
+            newValue: zoomLevel.toString(),
+            oldValue: localStorage.getItem('plusTv_zoomLevel')
+        }));
+    } catch (e) {
+        console.warn('Could not save zoom level:', e);
+    }
+}
+
+function applyZoom() {
+    if (!playerPage) {
+        playerPage = document.querySelector('.player-page');
+    }
+    if (playerPage) {
+        // Zoom'u player-page'e uygula
+        playerPage.style.transform = `scale(${zoomLevel})`;
+        playerPage.style.transformOrigin = 'top left';
+        
+        // Container genişliğini ayarla
+        const scalePercent = (1 / zoomLevel) * 100;
+        playerPage.style.width = `${scalePercent}%`;
+        playerPage.style.height = `${scalePercent}%`;
+        
+        // Video container'ın responsive olması için min-height'i zoom'a göre ayarla
+        const videoContainer = document.querySelector('.video-container-player');
+        if (videoContainer) {
+            // Video container'ın minimum yüksekliğini zoom'a göre ayarla
+            // Zoom küçüldükçe container daha küçük olabilir, ama minimum bir değer koru
+            const baseMinHeight = 300; // Base minimum height
+            const adjustedMinHeight = baseMinHeight * zoomLevel;
+            videoContainer.style.minHeight = `${Math.max(adjustedMinHeight, 200)}px`;
+            
+            console.log('Zoom applied:', zoomLevel, 'video container min-height:', videoContainer.style.minHeight);
+        }
+        
+        console.log('Zoom applied:', zoomLevel, 'to playerPage');
+    } else {
+        console.warn('playerPage not found for zoom application');
+    }
+}
+
+function toggleZoom() {
+    // Zoom levels: 1.0 (100%) -> 0.9 (90%) -> 0.85 (85%) -> 0.8 (80%) -> 1.0 (100%)
+    const zoomLevels = [1.0, 0.9, 0.85, 0.8];
+    const currentIndex = zoomLevels.findIndex(level => Math.abs(level - zoomLevel) < 0.01);
+    const nextIndex = (currentIndex + 1) % zoomLevels.length;
+    
+    zoomLevel = zoomLevels[nextIndex];
+    saveZoomLevel();
+    applyZoom();
+    updateZoomIcon();
+}
+
+function updateZoomIcon() {
+    if (!zoomToggleBtn) return;
+    
+    const fullscreenIcon = zoomToggleBtn.querySelector('.fullscreen-icon');
+    const fullscreenExitIcon = zoomToggleBtn.querySelector('.fullscreen-exit-icon');
+    
+    if (fullscreenIcon && fullscreenExitIcon) {
+        if (zoomLevel < 1.0) {
+            fullscreenIcon.style.display = 'none';
+            fullscreenExitIcon.style.display = 'block';
+            zoomToggleBtn.title = `Tam ekran (${Math.round(zoomLevel * 100)}%)`;
+        } else {
+            fullscreenIcon.style.display = 'block';
+            fullscreenExitIcon.style.display = 'none';
+            zoomToggleBtn.title = 'Tam ekran';
+        }
+    }
+}
+
+function initializeZoom() {
+    // DOM elementlerini tekrar kontrol et (DOM yüklenmiş olmalı)
+    if (!playerPage) {
+        playerPage = document.querySelector('.player-page');
+    }
+    if (!zoomToggleBtn) {
+        zoomToggleBtn = document.getElementById('zoomToggleBtn');
+    }
+    
+    // Debug: buton bulunamadıysa log
+    if (!zoomToggleBtn) {
+        console.warn('Zoom toggle button not found! Retrying...');
+        // Bir kez daha dene
+        setTimeout(() => {
+            zoomToggleBtn = document.getElementById('zoomToggleBtn');
+            if (zoomToggleBtn) {
+                initializeZoom();
+            } else {
+                console.error('Zoom toggle button still not found after retry!');
+            }
+        }, 200);
+        return;
+    }
+    
+    if (!playerPage) {
+        console.warn('Player page not found!');
+        return;
+    }
+    
+    // Load and apply saved zoom level
+    zoomLevel = loadZoomLevel();
+    applyZoom();
+    updateZoomIcon();
+    
+    // Zoom toggle event listener - mevcut listener'ları temizle
+    const newBtn = zoomToggleBtn.cloneNode(true);
+    if (zoomToggleBtn.parentNode) {
+        zoomToggleBtn.parentNode.replaceChild(newBtn, zoomToggleBtn);
+    }
+    zoomToggleBtn = newBtn;
+    
+    // Event listener ekle
+    zoomToggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Zoom button clicked, current zoom:', zoomLevel);
+        toggleZoom();
+        return false;
+    });
+    
+    // Mouse event'leri de ekle (bazı durumlarda click çalışmayabilir)
+    zoomToggleBtn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    console.log('Zoom initialized successfully, button:', zoomToggleBtn, 'zoomLevel:', zoomLevel);
+    
+    // Responsive zoom: ekran boyutuna göre otomatik ayarla
+    setupResponsiveZoom();
+    
+    // Storage event listener: diğer sayfalardaki zoom değişikliklerini dinle
+    setupZoomSync();
+}
+
+function setupResponsiveZoom() {
+    // Ekran boyutuna göre otomatik zoom ayarlama
+    function adjustZoomForScreen() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // Küçük ekranlar için otomatik zoom
+        if (width < 768) {
+            // Mobil cihazlar için zoom seviyesini kontrol et
+            // Eğer kullanıcı manuel zoom yapmışsa, onu koru
+            const savedZoom = loadZoomLevel();
+            if (savedZoom === 1.0) {
+                // Kullanıcı zoom yapmamışsa, küçük ekranlar için otomatik küçült
+                const autoZoom = Math.min(0.9, Math.max(0.8, width / 800));
+                if (Math.abs(autoZoom - zoomLevel) > 0.05) {
+                    zoomLevel = autoZoom;
+                    applyZoom();
+                    updateZoomIcon();
+                }
+            }
+        } else if (width >= 768 && width < 1024) {
+            // Tablet için
+            const savedZoom = loadZoomLevel();
+            if (savedZoom === 1.0) {
+                const autoZoom = Math.min(0.95, Math.max(0.85, width / 1000));
+                if (Math.abs(autoZoom - zoomLevel) > 0.05) {
+                    zoomLevel = autoZoom;
+                    applyZoom();
+                    updateZoomIcon();
+                }
+            }
+        }
+    }
+    
+    // İlk yüklemede ve ekran boyutu değiştiğinde ayarla
+    adjustZoomForScreen();
+    window.addEventListener('resize', () => {
+        // Debounce resize events
+        clearTimeout(window.zoomResizeTimeout);
+        window.zoomResizeTimeout = setTimeout(adjustZoomForScreen, 250);
+    });
+    
+    // Orientation change'de de ayarla
+    window.addEventListener('orientationchange', () => {
+        setTimeout(adjustZoomForScreen, 100);
+    });
+}
+
+function setupZoomSync() {
+    // Storage event listener: diğer sayfalardaki zoom değişikliklerini dinle
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'plusTv_zoomLevel' && e.newValue) {
+            const newZoom = parseFloat(e.newValue);
+            if (newZoom !== zoomLevel) {
+                zoomLevel = newZoom;
+                applyZoom();
+                updateZoomIcon();
+            }
+        }
+    });
+    
+    // Sayfa görünür olduğunda zoom seviyesini kontrol et
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            const savedZoom = loadZoomLevel();
+            if (Math.abs(savedZoom - zoomLevel) > 0.01) {
+                zoomLevel = savedZoom;
+                applyZoom();
+                updateZoomIcon();
+            }
+        }
+    });
+    
+    // Focus olduğunda da kontrol et
+    window.addEventListener('focus', () => {
+        const savedZoom = loadZoomLevel();
+        if (Math.abs(savedZoom - zoomLevel) > 0.01) {
+            zoomLevel = savedZoom;
+            applyZoom();
+            updateZoomIcon();
+        }
+    });
+}
 
 // Cleanup function
 function cleanup() {
@@ -261,6 +574,8 @@ function setupEventListeners() {
     if (backBtn) {
         backBtn.addEventListener('click', () => {
             cleanup();
+            // Zoom seviyesini kaydet (anasayfaya geçmeden önce)
+            saveZoomLevel();
             window.location.href = 'index.html';
         });
     }
@@ -277,19 +592,17 @@ function setupEventListeners() {
         });
     }
     
-    // Category selection
-    if (categoryCards && categoryCards.length > 0) {
-        categoryCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const category = card.dataset.category;
-                currentCategory = category;
-                
-                // Update active state
-                categoryCards.forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                
-                renderSidebarChannels();
-            });
+    // Category selection - setupCategoryEventListeners() tarafından yapılıyor
+    setupCategoryEventListeners();
+    
+    // Zoom button - direkt burada da ekle
+    if (zoomToggleBtn) {
+        zoomToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Zoom button clicked from setupEventListeners, current zoom:', zoomLevel);
+            toggleZoom();
+            return false;
         });
     }
     
@@ -322,6 +635,8 @@ function setupEventListeners() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 cleanup();
+                // Zoom seviyesini kaydet (anasayfaya geçmeden önce)
+                saveZoomLevel();
                 window.location.href = 'index.html';
             }
         });
@@ -362,13 +677,20 @@ async function loadChannelsFromM3U() {
                         const channelNameMatch = line.match(/,(.*)$/);
                         let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
                         
-                        const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                        let groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                        
+                        // Clean category name (remove " - Yurt Disi" etc.)
                         let category = groupTitle.split(' - ')[0].trim();
                         
-                        // Normalize category
+                        // Eğer kategori boşsa veya geçersizse "Diğer" yap
+                        if (!category || category === '' || category === 'undefined') {
+                            category = 'Diğer';
+                        }
+                        
+                        // Normalize category (normalizeCategory fonksiyonu kullan - büyük/küçük harf duyarsız)
                         category = normalizeCategory(category);
                         
-                        // Kategoriyi ekle
+                        // Tüm kategorileri ekle (normalize edilmiş haliyle - çiftlemeyi önlemek için)
                         if (category) {
                             allCategories.add(category);
                         }
@@ -398,9 +720,144 @@ async function loadChannelsFromM3U() {
         
         console.log(`✅ Toplam ${channels.length} kanal yüklendi!`);
         console.log(`✅ ${allCategories.size} kategori bulundu:`, Array.from(allCategories).sort());
+        
+        // Render dynamic categories (anasayfa ile aynı)
+        renderDynamicCategories();
     } catch (error) {
         console.error('M3U dosyası yüklenemedi:', error);
         showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');
+    }
+}
+
+// Dinamik kategori kartlarını oluştur (anasayfa ile aynı)
+function renderDynamicCategories() {
+    const categoriesContainer = document.querySelector('.player-categories-container');
+    if (!categoriesContainer) return;
+    
+    // Mevcut kartları temizle (Tümü hariç)
+    const existingCards = categoriesContainer.querySelectorAll('.category-card:not([data-category="all"])');
+    existingCards.forEach(card => card.remove());
+    
+    // Önce standart kategorileri göster (Tümü hariç - zaten HTML'de var)
+    const displayedCategories = new Set();
+    
+    STANDARD_CATEGORIES.forEach(cat => {
+        // "Tümü" kategorisini atla (HTML'de zaten var)
+        if (cat.id === 'all') {
+            return;
+        }
+        
+        // Kategoride kanal var mı kontrol et
+        const hasChannels = channels.some(ch => {
+            const chCategory = normalizeCategory(ch.category);
+            return chCategory === cat.id;
+        });
+        
+        // Eğer kanal varsa göster
+        if (hasChannels) {
+            displayedCategories.add(cat.id);
+            
+            const categoryCard = document.createElement('div');
+            categoryCard.className = 'category-card';
+            categoryCard.dataset.category = cat.id;
+            
+            const icon = document.createElement('div');
+            icon.className = 'category-icon';
+            icon.textContent = cat.icon;
+            
+            const name = document.createElement('div');
+            name.className = 'category-name';
+            name.textContent = cat.name;
+            
+            categoryCard.appendChild(icon);
+            categoryCard.appendChild(name);
+            
+            categoriesContainer.appendChild(categoryCard);
+        }
+    });
+    
+    // Sonra M3U'da bulunan ama STANDARD_CATEGORIES'de olmayan kategorileri ekle
+    // Çiftlemeyi önlemek için Set kullan
+    const uniqueCategories = new Set();
+    
+    allCategories.forEach(category => {
+        // Normalize et (büyük/küçük harf duyarsız)
+        const normalized = normalizeCategory(category);
+        
+        // Zaten gösterilmiş kategorileri atla
+        if (displayedCategories.has(normalized)) {
+            return;
+        }
+        
+        // "Tümü" kategorisini atla
+        if (normalized === 'all') {
+            return;
+        }
+        
+        // Çiftlemeyi önle
+        if (uniqueCategories.has(normalized)) {
+            return;
+        }
+        uniqueCategories.add(normalized);
+        
+        // Kategoride kanal var mı kontrol et
+        const hasChannels = channels.some(ch => {
+            const chCategory = normalizeCategory(ch.category);
+            return chCategory === normalized;
+        });
+        
+        // Eğer kanal varsa göster
+        if (hasChannels) {
+            displayedCategories.add(normalized);
+            
+            const categoryCard = document.createElement('div');
+            categoryCard.className = 'category-card';
+            categoryCard.dataset.category = normalized;
+            
+            const icon = document.createElement('div');
+            icon.className = 'category-icon';
+            // Standart kategoride yoksa varsayılan ikon kullan
+            const standardCat = STANDARD_CATEGORIES.find(c => c.id === normalized);
+            icon.textContent = standardCat ? standardCat.icon : categoryIcons[normalized] || '📺';
+            
+            const name = document.createElement('div');
+            name.className = 'category-name';
+            name.textContent = standardCat ? standardCat.name : normalized;
+            
+            categoryCard.appendChild(icon);
+            categoryCard.appendChild(name);
+            
+            categoriesContainer.appendChild(categoryCard);
+        }
+    });
+    
+    // Event listener'ları yeniden bağla
+    setupCategoryEventListeners();
+}
+
+// Kategori event listener'larını yeniden bağla
+function setupCategoryEventListeners() {
+    categoryCards = document.querySelectorAll('.category-card');
+    
+    if (categoryCards && categoryCards.length > 0) {
+        categoryCards.forEach(card => {
+            // Önceki listener'ları kaldır
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+            
+            // Yeni listener ekle
+            newCard.addEventListener('click', () => {
+                const category = newCard.dataset.category;
+                currentCategory = category;
+                
+                // Update active state
+                categoryCards = document.querySelectorAll('.category-card');
+                categoryCards.forEach(c => c.classList.remove('active'));
+                newCard.classList.add('active');
+                
+                renderSidebarChannels();
+            });
+        });
     }
 }
 

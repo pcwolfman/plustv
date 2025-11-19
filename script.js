@@ -14,6 +14,11 @@ let categoryTitle;
 let channelCount;
 let viewMenuBtn;
 let viewIcon;
+let zoomToggleBtn;
+let appContainer;
+
+// Zoom state
+let zoomLevel = 1.0; // 1.0 = normal, 0.9 = %90, 0.85 = %85, 0.8 = %80
 
 // Tesla Screen Detection & Orientation Handler
 function detectTeslaScreen() {
@@ -67,6 +72,156 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+// Zoom Functions
+function loadZoomLevel() {
+    try {
+        const stored = localStorage.getItem('plusTv_zoomLevel');
+        return stored ? parseFloat(stored) : 1.0;
+    } catch (e) {
+        return 1.0;
+    }
+}
+
+function saveZoomLevel() {
+    try {
+        localStorage.setItem('plusTv_zoomLevel', zoomLevel.toString());
+        // Storage event'i tetikle (diğer sayfalar için)
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'plusTv_zoomLevel',
+            newValue: zoomLevel.toString(),
+            oldValue: localStorage.getItem('plusTv_zoomLevel')
+        }));
+    } catch (e) {
+        console.warn('Could not save zoom level:', e);
+    }
+}
+
+function applyZoom() {
+    if (appContainer) {
+        appContainer.style.transform = `scale(${zoomLevel})`;
+        appContainer.style.transformOrigin = 'top left';
+        // Adjust container width to prevent horizontal scroll
+        const scalePercent = (1 / zoomLevel) * 100;
+        appContainer.style.width = `${scalePercent}%`;
+        appContainer.style.height = `${scalePercent}%`;
+    }
+}
+
+function toggleZoom() {
+    // Zoom levels: 1.0 (100%) -> 0.9 (90%) -> 0.85 (85%) -> 0.8 (80%) -> 1.0 (100%)
+    const zoomLevels = [1.0, 0.9, 0.85, 0.8];
+    const currentIndex = zoomLevels.findIndex(level => Math.abs(level - zoomLevel) < 0.01);
+    const nextIndex = (currentIndex + 1) % zoomLevels.length;
+    
+    zoomLevel = zoomLevels[nextIndex];
+    saveZoomLevel();
+    applyZoom();
+    updateZoomIcon();
+}
+
+function updateZoomIcon() {
+    if (!zoomToggleBtn) return;
+    
+    const fullscreenIcon = zoomToggleBtn.querySelector('.fullscreen-icon');
+    const fullscreenExitIcon = zoomToggleBtn.querySelector('.fullscreen-exit-icon');
+    
+    if (fullscreenIcon && fullscreenExitIcon) {
+        if (zoomLevel < 1.0) {
+            fullscreenIcon.style.display = 'none';
+            fullscreenExitIcon.style.display = 'block';
+            zoomToggleBtn.title = `Tam ekran (${Math.round(zoomLevel * 100)}%)`;
+        } else {
+            fullscreenIcon.style.display = 'block';
+            fullscreenExitIcon.style.display = 'none';
+            zoomToggleBtn.title = 'Tam ekran';
+        }
+    }
+}
+
+function setupResponsiveZoom() {
+    // Ekran boyutuna göre otomatik zoom ayarlama
+    function adjustZoomForScreen() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // Küçük ekranlar için otomatik zoom
+        if (width < 768) {
+            // Mobil cihazlar için zoom seviyesini kontrol et
+            // Eğer kullanıcı manuel zoom yapmışsa, onu koru
+            const savedZoom = loadZoomLevel();
+            if (savedZoom === 1.0) {
+                // Kullanıcı zoom yapmamışsa, küçük ekranlar için otomatik küçült
+                const autoZoom = Math.min(0.9, Math.max(0.8, width / 800));
+                if (Math.abs(autoZoom - zoomLevel) > 0.05) {
+                    zoomLevel = autoZoom;
+                    applyZoom();
+                    updateZoomIcon();
+                }
+            }
+        } else if (width >= 768 && width < 1024) {
+            // Tablet için
+            const savedZoom = loadZoomLevel();
+            if (savedZoom === 1.0) {
+                const autoZoom = Math.min(0.95, Math.max(0.85, width / 1000));
+                if (Math.abs(autoZoom - zoomLevel) > 0.05) {
+                    zoomLevel = autoZoom;
+                    applyZoom();
+                    updateZoomIcon();
+                }
+            }
+        }
+    }
+    
+    // İlk yüklemede ve ekran boyutu değiştiğinde ayarla
+    adjustZoomForScreen();
+    window.addEventListener('resize', () => {
+        // Debounce resize events
+        clearTimeout(window.zoomResizeTimeout);
+        window.zoomResizeTimeout = setTimeout(adjustZoomForScreen, 250);
+    });
+    
+    // Orientation change'de de ayarla
+    window.addEventListener('orientationchange', () => {
+        setTimeout(adjustZoomForScreen, 100);
+    });
+}
+
+function setupZoomSync() {
+    // Storage event listener: diğer sayfalardaki zoom değişikliklerini dinle
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'plusTv_zoomLevel' && e.newValue) {
+            const newZoom = parseFloat(e.newValue);
+            if (newZoom !== zoomLevel) {
+                zoomLevel = newZoom;
+                applyZoom();
+                updateZoomIcon();
+            }
+        }
+    });
+    
+    // Sayfa görünür olduğunda zoom seviyesini kontrol et
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            const savedZoom = loadZoomLevel();
+            if (Math.abs(savedZoom - zoomLevel) > 0.01) {
+                zoomLevel = savedZoom;
+                applyZoom();
+                updateZoomIcon();
+            }
+        }
+    });
+    
+    // Focus olduğunda da kontrol et
+    window.addEventListener('focus', () => {
+        const savedZoom = loadZoomLevel();
+        if (Math.abs(savedZoom - zoomLevel) > 0.01) {
+            zoomLevel = savedZoom;
+            applyZoom();
+            updateZoomIcon();
+        }
+    });
+}
+
 // Event Listeners
 function setupEventListeners() {
     // Get DOM elements
@@ -78,6 +233,8 @@ function setupEventListeners() {
     channelCount = document.getElementById('channelCount');
     viewMenuBtn = document.getElementById('viewMenuBtn');
     viewIcon = document.getElementById('viewIcon');
+    zoomToggleBtn = document.getElementById('zoomToggleBtn');
+    appContainer = document.querySelector('.app-container');
     
     // Search
     if (searchInput) {
@@ -115,6 +272,24 @@ function setupEventListeners() {
         });
     });
     
+    // Zoom toggle
+    if (zoomToggleBtn) {
+        zoomToggleBtn.addEventListener('click', () => {
+            toggleZoom();
+        });
+        
+        // Load and apply saved zoom level
+        zoomLevel = loadZoomLevel();
+        applyZoom();
+        updateZoomIcon();
+        
+        // Responsive zoom: ekran boyutuna göre otomatik ayarla
+        setupResponsiveZoom();
+        
+        // Storage event listener: diğer sayfalardaki zoom değişikliklerini dinle
+        setupZoomSync();
+    }
+    
     // Initialize view
     changeView(currentView, false);
     
@@ -124,6 +299,8 @@ function setupEventListeners() {
             const channelCard = e.target.closest('.channel-card');
             if (channelCard && channelCard.dataset.channelId) {
                 const channelId = channelCard.dataset.channelId;
+                // Zoom seviyesini kaydet (player sayfasına geçmeden önce)
+                saveZoomLevel();
                 window.location.href = `player.html?id=${channelId}&category=${encodeURIComponent(currentCategory)}`;
             }
         });
@@ -168,18 +345,21 @@ async function loadChannelsFromM3U() {
                         let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
                         
                         // Get category from group-title
-                        const groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                        let groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
                         
                         // Clean category name (remove " - Yurt Disi" etc.)
                         let category = groupTitle.split(' - ')[0].trim();
                         
-                        // Normalize category
-                        if (categoryMapping[category]) {
-                            category = categoryMapping[category];
+                        // Eğer kategori boşsa veya geçersizse "Diğer" yap
+                        if (!category || category === '' || category === 'undefined') {
+                            category = 'Diğer';
                         }
                         
-                        // Kategoriyi ekle (sadece standart kategorilere)
-                        if (category && STANDARD_CATEGORIES.some(c => c.id === category)) {
+                        // Normalize category (normalizeCategory fonksiyonu kullan - büyük/küçük harf duyarsız)
+                        category = normalizeCategory(category);
+                        
+                        // Tüm kategorileri ekle (normalize edilmiş haliyle - çiftlemeyi önlemek için)
+                        if (category) {
                             allCategories.add(category);
                         }
                         
@@ -275,7 +455,7 @@ const categoryMapping = {
     'Yurt Disi': 'Yurt Dışı'
 };
 
-// Dinamik kategori kartlarını oluştur (sadece standart kategoriler)
+// Dinamik kategori kartlarını oluştur
 function renderDynamicCategories() {
     const categoriesContainer = document.querySelector('.categories-container');
     if (!categoriesContainer) return;
@@ -284,7 +464,9 @@ function renderDynamicCategories() {
     const existingCards = categoriesContainer.querySelectorAll('.category-card:not([data-category="all"])');
     existingCards.forEach(card => card.remove());
     
-    // Sadece standart kategorileri göster (Tümü hariç - zaten HTML'de var)
+    // Önce standart kategorileri göster (Tümü hariç - zaten HTML'de var)
+    const displayedCategories = new Set();
+    
     STANDARD_CATEGORIES.forEach(cat => {
         // "Tümü" kategorisini atla (HTML'de zaten var)
         if (cat.id === 'all') {
@@ -292,36 +474,90 @@ function renderDynamicCategories() {
         }
         
         // Kategoride kanal var mı kontrol et
+        // Kanal kategorileri zaten normalize edilmiş olarak saklanıyor
         const hasChannels = channels.some(ch => {
-            let chCategory = ch.category;
-            // Eşleştirme uygula
-            if (categoryMapping[chCategory]) {
-                chCategory = categoryMapping[chCategory];
-            }
+            const chCategory = normalizeCategory(ch.category);
             return chCategory === cat.id;
         });
         
-        // Eğer kanal yoksa atla
-        if (!hasChannels) {
+        // Eğer kanal varsa göster
+        if (hasChannels) {
+            displayedCategories.add(cat.id);
+            
+            const categoryCard = document.createElement('div');
+            categoryCard.className = 'category-card';
+            categoryCard.dataset.category = cat.id;
+            
+            const icon = document.createElement('div');
+            icon.className = 'category-icon';
+            icon.textContent = cat.icon;
+            
+            const name = document.createElement('div');
+            name.className = 'category-name';
+            name.textContent = cat.name;
+            
+            categoryCard.appendChild(icon);
+            categoryCard.appendChild(name);
+            
+            categoriesContainer.appendChild(categoryCard);
+        }
+    });
+    
+    // Sonra M3U'da bulunan ama STANDARD_CATEGORIES'de olmayan kategorileri ekle
+    // allCategories zaten normalize edilmiş kategorileri içeriyor, ama yine de normalize edelim (güvenli olması için)
+    // Çiftlemeyi önlemek için Set kullan
+    const uniqueCategories = new Set();
+    
+    allCategories.forEach(category => {
+        // Normalize et (büyük/küçük harf duyarsız)
+        const normalized = normalizeCategory(category);
+        
+        // Zaten gösterilmiş kategorileri atla
+        if (displayedCategories.has(normalized)) {
             return;
         }
         
-        const categoryCard = document.createElement('div');
-        categoryCard.className = 'category-card';
-        categoryCard.dataset.category = cat.id;
+        // "Tümü" kategorisini atla
+        if (normalized === 'all') {
+            return;
+        }
         
-        const icon = document.createElement('div');
-        icon.className = 'category-icon';
-        icon.textContent = cat.icon;
+        // Çiftlemeyi önle
+        if (uniqueCategories.has(normalized)) {
+            return;
+        }
+        uniqueCategories.add(normalized);
         
-        const name = document.createElement('div');
-        name.className = 'category-name';
-        name.textContent = cat.name;
+        // Kategoride kanal var mı kontrol et
+        // Kanal kategorileri zaten normalize edilmiş olarak saklanıyor
+        const hasChannels = channels.some(ch => {
+            const chCategory = normalizeCategory(ch.category);
+            return chCategory === normalized;
+        });
         
-        categoryCard.appendChild(icon);
-        categoryCard.appendChild(name);
-        
-        categoriesContainer.appendChild(categoryCard);
+        // Eğer kanal varsa göster
+        if (hasChannels) {
+            displayedCategories.add(normalized);
+            
+            const categoryCard = document.createElement('div');
+            categoryCard.className = 'category-card';
+            categoryCard.dataset.category = normalized;
+            
+            const icon = document.createElement('div');
+            icon.className = 'category-icon';
+            // Standart kategoride yoksa varsayılan ikon kullan
+            const standardCat = STANDARD_CATEGORIES.find(c => c.id === normalized);
+            icon.textContent = standardCat ? standardCat.icon : categoryIcons[normalized] || '📺';
+            
+            const name = document.createElement('div');
+            name.className = 'category-name';
+            name.textContent = standardCat ? standardCat.name : normalized;
+            
+            categoryCard.appendChild(icon);
+            categoryCard.appendChild(name);
+            
+            categoriesContainer.appendChild(categoryCard);
+        }
     });
 }
 
@@ -372,10 +608,35 @@ function selectCategory(category) {
 
 // Kategoriyi normalize et
 function normalizeCategory(category) {
+    if (!category) return 'Diğer';
+    
+    // Önce categoryMapping'e bak
     if (categoryMapping[category]) {
         return categoryMapping[category];
     }
-    return category;
+    
+    // Büyük/küçük harf duyarsız kontrol (ilk harf büyük, diğerleri küçük)
+    const categoryLower = category.toLowerCase();
+    const categoryTitleCase = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+    
+    // categoryMapping'de büyük/küçük harf varyantlarını kontrol et
+    for (const [key, value] of Object.entries(categoryMapping)) {
+        if (key.toLowerCase() === categoryLower) {
+            return value;
+        }
+    }
+    
+    // STANDARD_CATEGORIES'de büyük/küçük harf duyarsız kontrol
+    const standardCat = STANDARD_CATEGORIES.find(c => 
+        c.id.toLowerCase() === categoryLower || 
+        c.name.toLowerCase() === categoryLower
+    );
+    if (standardCat) {
+        return standardCat.id;
+    }
+    
+    // İlk harf büyük, diğerleri küçük formatına dönüştür
+    return categoryTitleCase;
 }
 
 // Render Channels (optimized)

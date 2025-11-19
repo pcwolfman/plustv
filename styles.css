@@ -102,6 +102,9 @@ body {
     max-width: 100%;
     margin: 0 auto;
     padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
 }
 
 /* Arama Header */
@@ -121,6 +124,37 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.zoom-toggle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg-dark);
+    border: 2px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.zoom-toggle-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.zoom-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.zoom-toggle-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
 .view-menu-container {
@@ -1280,8 +1314,11 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: var(--bg-dark);
+    position: relative;
 }
 
 .player-categories-section {
@@ -1292,15 +1329,49 @@ body {
 }
 
 .player-categories-container {
-    width: 100%;
     display: flex;
     gap: 0.5rem;
     overflow-x: auto;
     overflow-y: hidden;
     flex-wrap: nowrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
     padding-bottom: 0.25rem;
     -webkit-overflow-scrolling: touch;
+    width: max-content;
+    min-width: 100%;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.player-categories-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.player-categories-container::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.player-categories-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.player-categories-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Player Page Category Cards - Base Styles */
+.player-categories-section .category-card {
+    flex-shrink: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Player Page Category Cards - Responsive */
@@ -1308,8 +1379,8 @@ body {
     .player-categories-container {
         flex-wrap: nowrap;
         gap: 0.25rem;
-        overflow-x: hidden;
-        justify-content: center;
+        overflow-x: auto;
+        justify-content: flex-start;
     }
     
     .player-categories-section .category-card {
@@ -1317,6 +1388,8 @@ body {
         min-width: 48px;
         max-width: 48px;
         padding: 0.375rem;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     
     .player-categories-section .category-icon {
@@ -1332,8 +1405,8 @@ body {
     .player-categories-container {
         flex-wrap: nowrap;
         gap: 0.2rem;
-        overflow-x: hidden;
-        justify-content: center;
+        overflow-x: auto;
+        justify-content: flex-start;
     }
     
     .player-categories-section .category-card {
@@ -1341,6 +1414,8 @@ body {
         min-width: 42px;
         max-width: 42px;
         padding: 0.3rem;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     
     .player-categories-section .category-icon {
@@ -1356,8 +1431,8 @@ body {
     .player-categories-container {
         flex-wrap: nowrap;
         gap: 0.15rem;
-        overflow-x: hidden;
-        justify-content: center;
+        overflow-x: auto;
+        justify-content: flex-start;
     }
     
     .player-categories-section .category-card {
@@ -1365,6 +1440,8 @@ body {
         min-width: 38px;
         max-width: 38px;
         padding: 0.25rem;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     
     .player-categories-section .category-icon {
@@ -1461,6 +1538,39 @@ body {
     gap: 0.75rem;
     background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-dark) 100%);
     backdrop-filter: blur(10px);
+    justify-content: space-between;
+}
+
+.sidebar-header .zoom-toggle-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-dark);
+    border: 1.5px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    padding: 0;
+    margin-left: auto;
+}
+
+.sidebar-header .zoom-toggle-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.sidebar-header .zoom-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.sidebar-header .zoom-toggle-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 .back-btn {
@@ -1720,6 +1830,10 @@ body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    /* Responsive için */
+    min-height: 300px;
+    /* Zoom uygulandığında düzgün görünmesi için */
+    box-sizing: border-box;
 }
 
 .video-placeholder-player {
@@ -1750,6 +1864,9 @@ body {
     background: #000;
     max-width: 100%;
     max-height: 100%;
+    /* Zoom'dan etkilenmemesi için */
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Uygulama içinde video controls'u gizle */

@@ -900,8 +900,8 @@ function playM3U8(url) {
         
         const loadedDataHandler = () => {
             if (safariTimeout) {
-                clearTimeout(safariTimeout);
-                activeTimeouts = activeTimeouts.filter(t => t !== safariTimeout);
+            clearTimeout(safariTimeout);
+            activeTimeouts = activeTimeouts.filter(t => t !== safariTimeout);
             }
             videoPlayer.removeEventListener('loadeddata', loadedDataHandler);
         };
@@ -955,8 +955,8 @@ function playIframe(url) {
     // YouTube olmayan linkler için load event'ini bekle
     if (!url.includes('youtube.com')) {
         iframePlayer.onload = () => {
-            loadingPlayer.classList.remove('active');
-            videoPlaceholderPlayer.style.display = 'none';
+    loadingPlayer.classList.remove('active');
+    videoPlaceholderPlayer.style.display = 'none';
         };
     }
 }

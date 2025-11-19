@@ -284,8 +284,13 @@ function renderDynamicCategories() {
     const existingCards = categoriesContainer.querySelectorAll('.category-card:not([data-category="all"])');
     existingCards.forEach(card => card.remove());
     
-    // Sadece standart kategorileri göster
+    // Sadece standart kategorileri göster (Tümü hariç - zaten HTML'de var)
     STANDARD_CATEGORIES.forEach(cat => {
+        // "Tümü" kategorisini atla (HTML'de zaten var)
+        if (cat.id === 'all') {
+            return;
+        }
+        
         // Kategoride kanal var mı kontrol et
         const hasChannels = channels.some(ch => {
             let chCategory = ch.category;
@@ -296,8 +301,8 @@ function renderDynamicCategories() {
             return chCategory === cat.id;
         });
         
-        // Eğer kanal yoksa ve "Tümü" değilse atla
-        if (!hasChannels && cat.id !== 'all') {
+        // Eğer kanal yoksa atla
+        if (!hasChannels) {
             return;
         }
         

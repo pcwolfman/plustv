@@ -944,8 +944,41 @@ function setupCategoryEventListeners() {
             const newCard = card.cloneNode(true);
             card.parentNode.replaceChild(newCard, card);
             
-            // Yeni listener ekle
-            newCard.addEventListener('click', () => {
+            // Touch scrolling için - sadece gerçek click'te tetiklenmeli
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isScrolling = false;
+            
+            // Touch start - scroll tespiti için
+            newCard.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isScrolling = false;
+            }, { passive: true });
+            
+            // Touch move - scroll olup olmadığını kontrol et
+            newCard.addEventListener('touchmove', (e) => {
+                if (!touchStartX || !touchStartY) return;
+                
+                const touchEndX = e.touches[0].clientX;
+                const touchEndY = e.touches[0].clientY;
+                const diffX = Math.abs(touchEndX - touchStartX);
+                const diffY = Math.abs(touchEndY - touchStartY);
+                
+                // Yatay kaydırma varsa scroll olarak işaretle
+                if (diffX > 10 || diffY > 10) {
+                    isScrolling = true;
+                }
+            }, { passive: true });
+            
+            // Click event - sadece scroll değilse tetikle
+            newCard.addEventListener('click', (e) => {
+                // Eğer scroll yapıldıysa click'i yok say
+                if (isScrolling) {
+                    isScrolling = false;
+                    return;
+                }
+                
                 const category = newCard.dataset.category;
                 currentCategory = category;
                 
@@ -955,7 +988,15 @@ function setupCategoryEventListeners() {
                 newCard.classList.add('active');
                 
                 renderSidebarChannels();
-            });
+            }, { passive: false });
+            
+            // Touch end - scroll durumunu sıfırla
+            newCard.addEventListener('touchend', () => {
+                // Kısa bir gecikme sonra scroll durumunu sıfırla
+                setTimeout(() => {
+                    isScrolling = false;
+                }, 100);
+            }, { passive: true });
         });
     }
 }

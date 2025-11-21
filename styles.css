@@ -88,6 +88,14 @@
     --bg-gradient: linear-gradient(135deg, #1a140f 0%, #2a1f15 100%);
 }
 
+html, body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg-gradient, var(--bg-dark));
@@ -95,12 +103,12 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     line-height: 1.6;
-    overflow-x: hidden;
 }
 
 .app-container {
+    width: 100%;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0;
     padding: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -119,11 +127,14 @@ body {
 }
 
 .search-container {
-    max-width: 1600px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1.5rem;
     display: flex;
     align-items: center;
     gap: 1.25rem;
+    box-sizing: border-box;
 }
 
 .zoom-toggle-btn {
@@ -277,6 +288,7 @@ body {
 
 /* Kategoriler Bölümü - Araç Multimedya Optimizasyonu */
 .categories-section {
+    width: 100%;
     padding: 1rem 1.5rem 0.75rem 1.5rem;
     background: var(--bg-dark);
     border-bottom: 2px solid var(--border);
@@ -286,6 +298,7 @@ body {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: var(--primary) var(--bg-dark);
+    box-sizing: border-box;
 }
 
 .categories-section::-webkit-scrollbar {
@@ -402,9 +415,11 @@ body {
 
 /* Kanallar Bölümü - Araç Multimedya Optimizasyonu */
 .channels-section {
-    max-width: 1600px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: 1.25rem 1.5rem 2.5rem 1.5rem;
+    box-sizing: border-box;
 }
 
 .channels-header {
@@ -1070,6 +1085,7 @@ body {
 
     .search-container {
         gap: 1.5rem;
+        padding: 0 2rem;
     }
 
     .zoom-toggle-btn,
@@ -1202,6 +1218,10 @@ body {
         padding: 1.125rem 1.25rem;
     }
 
+    .search-container {
+        padding: 0 1.25rem;
+    }
+
     .zoom-toggle-btn,
     .view-menu-btn {
         width: 52px;
@@ -1289,6 +1309,10 @@ body {
         padding: 1rem 1.125rem;
     }
 
+    .search-container {
+        padding: 0 1.125rem;
+    }
+
     .zoom-toggle-btn,
     .view-menu-btn {
         width: 48px;
@@ -1345,6 +1369,7 @@ body {
 @media (max-width: 768px) {
     .search-container {
         gap: 0.75rem;
+        padding: 0 0.75rem;
     }
 
     .zoom-toggle-btn,
@@ -1451,6 +1476,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .search-container {
+        padding: 0 0.75rem;
+    }
+
     .search-box input {
         padding: 0.75rem 0.875rem 0.75rem 2.5rem;
         font-size: 0.9375rem;
@@ -1507,6 +1536,10 @@ body {
 
 /* Very small screens */
 @media (max-width: 360px) {
+    .search-container {
+        padding: 0 0.5rem;
+    }
+
     .categories-section {
         padding: 0.5rem 0.375rem 0.375rem 0.375rem;
     }

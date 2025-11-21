@@ -7,7 +7,7 @@ let activeTab = 'channels';
 let activeTimeouts = []; // Track all timeouts for cleanup
 let hlsInstance = null; // Track HLS instance
 let allCategories = new Set(); // Tüm kategorileri tutmak için
-const m3uFiles = ['tv.m3u', 'tr.m3u']; // Yüklenecek M3U dosyaları
+const m3uFiles = ['tv.m3u']; // Yüklenecek M3U dosyaları
 
 // Zoom state
 let zoomLevel = 1.0; // 1.0 = normal, 0.9 = %90, 0.85 = %85, 0.8 = %80
@@ -31,7 +31,7 @@ const categoryIcons = {
     'Ekonomi': '💰',
     'Yurt Disi': '🌍',
     'Yurt Dışı': '🌍',
-    'Radyo Canlı': '📻',
+    'Radyo Canlı': '▶️',
     'Radyo': '📻',
     'Diğer': '📺'
 };
@@ -49,7 +49,7 @@ const STANDARD_CATEGORIES = [
     { id: 'Çocuk', name: 'Çocuk', icon: '👶' },
     { id: 'Ekonomi', name: 'Ekonomi', icon: '💰' },
     { id: 'Yurt Dışı', name: 'Yurt Dışı', icon: '🌍' },
-    { id: 'Radyo Canlı', name: 'Radyo Canlı', icon: '📻' }
+    { id: 'Radyo Canlı', name: 'Radyo Canlı', icon: '▶️' }
 ];
 
 // Kategori eşleştirme (eski -> yeni)
@@ -62,16 +62,21 @@ const categoryMapping = {
 
 // Kategoriyi normalize et
 function normalizeCategory(category) {
-    if (!category) return 'Diğer';
+    if (!category) return 'Ulusal';
     
-    // Önce categoryMapping'e bak
+    // Trim ve temizle
+    category = category.trim();
+    
+    // Önce categoryMapping'e bak (tam eşleşme)
     if (categoryMapping[category]) {
         return categoryMapping[category];
     }
     
     // Büyük/küçük harf duyarsız kontrol (ilk harf büyük, diğerleri küçük)
     const categoryLower = category.toLowerCase();
-    const categoryTitleCase = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+    const categoryTitleCase = category.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
     
     // categoryMapping'de büyük/küçük harf varyantlarını kontrol et
     for (const [key, value] of Object.entries(categoryMapping)) {
@@ -80,7 +85,8 @@ function normalizeCategory(category) {
         }
     }
     
-    // STANDARD_CATEGORIES'de büyük/küçük harf duyarsız kontrol
+    // STANDARD_CATEGORIES'de TAM EŞLEŞME kontrolü (büyük/küçük harf duyarsız)
+    // ÖNEMLİ: Sadece tam eşleşme varsa normalize et, yoksa birleşik kategorileri koru
     const standardCat = STANDARD_CATEGORIES.find(c => 
         c.id.toLowerCase() === categoryLower || 
         c.name.toLowerCase() === categoryLower
@@ -89,7 +95,8 @@ function normalizeCategory(category) {
         return standardCat.id;
     }
     
-    // İlk harf büyük, diğerleri küçük formatına dönüştür
+    // Birleşik kategorileri koru (örn: "Dini Müzik" -> "Dini Müzik")
+    // İlk harf büyük, diğerleri küçük formatına dönüştür (her kelime için)
     return categoryTitleCase;
 }
 
@@ -315,21 +322,39 @@ function applyZoom() {
             if (sidebar) {
                 sidebar.style.transform = `scale(${zoomLevel})`;
                 sidebar.style.transformOrigin = 'top left';
+                // Sidebar genişliğini zoom seviyesine göre ayarla
+                // Scale sonrası 280px görünmesi için: 280 / zoomLevel
+                const sidebarBaseWidth = 280; // Varsayılan genişlik (CSS'den)
+                sidebar.style.width = `${sidebarBaseWidth / zoomLevel}px`;
+                sidebar.style.flexShrink = '0';
             }
             if (categoriesSection) {
                 categoriesSection.style.transform = `scale(${zoomLevel})`;
                 categoriesSection.style.transformOrigin = 'top left';
+                // Categories section genişliğini ayarla - tam genişliğe yayılsın
+                categoriesSection.style.width = `${100 / zoomLevel}%`;
+                categoriesSection.style.maxWidth = 'none';
             }
+            
+            // Player main'in genişliğini ayarla - kalan alanı doldursun
+            const sidebarWidth = sidebar ? (280 / zoomLevel) : 0;
+            const availableWidth = `calc(100% - ${sidebarWidth}px)`;
+            playerMain.style.width = availableWidth;
+            playerMain.style.maxWidth = availableWidth;
             
             // Content wrapper'a zoom uygulama (video container'ı korumak için)
             playerContentWrapper.style.transform = 'none';
             playerContentWrapper.style.width = '100%';
             playerContentWrapper.style.height = '100%';
+            playerContentWrapper.style.maxWidth = '100%';
             
-            // Player page'in boyutlarını koru
+            // Player page'in boyutlarını koru - tam genişliğe yayılsın
             playerPage.style.transform = 'none';
             playerPage.style.width = '100%';
+            playerPage.style.maxWidth = '100%';
             playerPage.style.height = '100vh';
+            playerPage.style.margin = '0';
+            playerPage.style.padding = '0';
             
             // Video container'ı zoom'dan tamamen muaf tut
             videoContainer.style.transform = 'none';
@@ -341,19 +366,15 @@ function applyZoom() {
             videoContainer.style.overflow = 'hidden';
             videoContainer.style.boxSizing = 'border-box';
             
-            // Player main'in boyutlarını ayarla
+            // Player main'in boyutlarını ayarla - tam genişliğe yayılsın
             playerMain.style.flex = '1';
             playerMain.style.minHeight = '0';
             playerMain.style.overflow = 'hidden';
             playerMain.style.width = '100%';
+            playerMain.style.maxWidth = '100%';
             playerMain.style.height = '100%';
             
-            // Player main'in boyutlarını ayarla (video container için alan bırak)
-            playerMain.style.flex = '1';
-            playerMain.style.minHeight = '0';
-            playerMain.style.overflow = 'hidden';
-            
-            console.log('Zoom applied:', zoomLevel, 'to content wrapper, video container protected with inverse scale:', inverseScale);
+            console.log('Zoom applied:', zoomLevel, 'to sidebar and categories, page width: 100%');
         } else {
             // Fallback: Eski yöntem (tüm sayfaya zoom)
             playerPage.style.transform = `scale(${zoomLevel})`;
@@ -774,14 +795,15 @@ async function loadChannelsFromM3U() {
                         const channelNameMatch = line.match(/,(.*)$/);
                         let channelName = channelNameMatch ? channelNameMatch[1].trim() : '';
                         
-                        let groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Diğer';
+                        let groupTitle = groupTitleMatch ? groupTitleMatch[1].trim() : 'Ulusal';
                         
-                        // Clean category name (remove " - Yurt Disi" etc.)
+                        // Clean category name - birleşik kategorileri ayır
+                        // "Ulusal - Yurt Disi" -> "Ulusal" ve "Yurt Dışı" olarak işle
                         let category = groupTitle.split(' - ')[0].trim();
                         
-                        // Eğer kategori boşsa veya geçersizse "Diğer" yap
+                        // Eğer kategori boşsa veya geçersizse "Ulusal" yap
                         if (!category || category === '' || category === 'undefined') {
-                            category = 'Diğer';
+                            category = 'Ulusal';
                         }
                         
                         // Normalize category (normalizeCategory fonksiyonu kullan - büyük/küçük harf duyarsız)
@@ -790,6 +812,17 @@ async function loadChannelsFromM3U() {
                         // Tüm kategorileri ekle (normalize edilmiş haliyle - çiftlemeyi önlemek için)
                         if (category) {
                             allCategories.add(category);
+                        }
+                        
+                        // Eğer birleşik kategori varsa (örn: "Ulusal - Yurt Disi"), ikinci kategoriyi de ekle
+                        if (groupTitle.includes(' - ')) {
+                            const secondCategory = groupTitle.split(' - ')[1]?.trim();
+                            if (secondCategory && secondCategory !== category) {
+                                const normalizedSecond = normalizeCategory(secondCategory);
+                                if (normalizedSecond) {
+                                    allCategories.add(normalizedSecond);
+                                }
+                            }
                         }
                         
                         currentChannel = {
@@ -815,6 +848,40 @@ async function loadChannelsFromM3U() {
             }
         }
         
+        // YouTube Radyo kanallarını ekle
+        const radioChannels = [
+            { name: 'Kral POP Radyo', url: 'https://www.youtube.com/watch?v=5J-w9AHKHsc' },
+            { name: "Radyo 45'lik", url: 'https://www.youtube.com/watch?v=dk_uf4o2atY' },
+            { name: 'Slow Türk', url: 'https://www.youtube.com/watch?v=tWTHF0r2oEw' },
+            { name: 'Kral FM', url: 'https://www.youtube.com/watch?v=A49bKX8gb-8' },
+            { name: 'Fenomen Türk', url: 'https://www.youtube.com/watch?v=lYq5eFZp2GQ' },
+            { name: 'Kalp FM', url: 'https://www.youtube.com/watch?v=_V8XXGBh_kw' },
+            { name: 'Akustik Türkü', url: 'https://www.youtube.com/watch?v=_qm_JqY-6OI' },
+            { name: 'Radyo Damar', url: 'https://www.youtube.com/watch?v=gbNBCvSkFlg' },
+            { name: 'Radyo 44', url: 'https://www.youtube.com/watch?v=gsD3xoM8v3k' },
+            { name: 'Radyo 7', url: 'https://www.youtube.com/watch?v=Nnn6OWQ6kk0' },
+            { name: 'Radyo Seymen', url: 'https://www.youtube.com/watch?v=D-bO7oD8xNk' },
+            { name: 'Karadeniz Akustik', url: 'https://www.youtube.com/watch?v=Fru_Ss-TqgY' },
+            { name: 'Radyo 2000', url: 'https://www.youtube.com/watch?v=ydJGw5tjJyA&list=RDydJGw5tjJyA&start_radio=1' },
+            { name: 'Hit Remix', url: 'https://www.youtube.com/watch?v=4j0GAzbACjk' },
+            { name: 'Viva Arabesk', url: 'https://www.youtube.com/watch?v=Vie289ngRO8' },
+            { name: 'Arabesk Türk', url: 'https://www.youtube.com/watch?v=IshBtT-tdxQ' },
+            { name: 'En Çok Dinlenen Türküler', url: 'https://www.youtube.com/watch?v=vhOeV8QsVzo&list=RDvhOeV8QsVzo&start_radio=1' }
+        ];
+        
+        radioChannels.forEach(radio => {
+            channels.push({
+                id: channelId++,
+                name: radio.name,
+                url: radio.url,
+                category: 'Radyo Canlı',
+                tvgId: '',
+                tvgLogo: ''
+            });
+        });
+        
+        allCategories.add('Radyo Canlı');
+        
         console.log(`✅ Toplam ${channels.length} kanal yüklendi!`);
         console.log(`✅ ${allCategories.size} kategori bulundu:`, Array.from(allCategories).sort());
         
@@ -824,8 +891,109 @@ async function loadChannelsFromM3U() {
         }, 100);
     } catch (error) {
         console.error('M3U dosyası yüklenemedi:', error);
-        showError('Kanal listesi yüklenemedi. Lütfen sayfayı yenileyin.');
+        // Hata mesajı kaldırıldı - sessiz çalış
+        console.warn('Kanal listesi yüklenemedi');
     }
+}
+
+// Kategorileri birleştir ve normalize et
+function mergeAndNormalizeCategories() {
+    const categoryMap = new Map(); // normalized -> { name, icon, id, count, isStandard }
+    
+    // Tüm kanalları kategorilere göre grupla
+    const channelCategoryMap = new Map(); // normalized category -> channels[]
+    
+    channels.forEach(ch => {
+        const normalized = normalizeCategory(ch.category).toLowerCase();
+        if (!channelCategoryMap.has(normalized)) {
+            channelCategoryMap.set(normalized, []);
+        }
+        channelCategoryMap.get(normalized).push(ch);
+    });
+    
+    // STANDARD_CATEGORIES'i öncelikli olarak ekle
+    STANDARD_CATEGORIES.forEach(cat => {
+        if (cat.id === 'all') return;
+        
+        const normalized = cat.id.toLowerCase();
+        const matchingChannels = [];
+        
+        // Bu kategoriye ait tüm kanalları bul
+        for (const [catKey, catChannels] of channelCategoryMap.entries()) {
+            if (catKey === normalized || 
+                catKey.includes(normalized) || 
+                normalized.includes(catKey) ||
+                catKey.split(' ').some(word => word === normalized) ||
+                normalized.split(' ').some(word => catKey === word)) {
+                matchingChannels.push(...catChannels);
+            }
+        }
+        
+        // Tekrarları kaldır
+        const uniqueChannels = Array.from(new Set(matchingChannels.map(ch => ch.id))).map(id => 
+            matchingChannels.find(ch => ch.id === id)
+        );
+        
+        if (uniqueChannels.length > 0) {
+            categoryMap.set(normalized, {
+                name: cat.name,
+                icon: cat.icon,
+                id: cat.id,
+                count: uniqueChannels.length,
+                isStandard: true
+            });
+            
+            // Bu kategoriye ait kanalları işaretle (tekrar işlenmesin)
+            uniqueChannels.forEach(ch => {
+                const chNormalized = normalizeCategory(ch.category).toLowerCase();
+                channelCategoryMap.delete(chNormalized);
+            });
+        }
+    });
+    
+    // "Diğer" kategorisindeki kanalları "Ulusal"a taşı
+    if (channelCategoryMap.has('diğer')) {
+        const digerChannels = channelCategoryMap.get('diğer');
+        const ulusalNormalized = 'ulusal';
+        if (!channelCategoryMap.has(ulusalNormalized)) {
+            channelCategoryMap.set(ulusalNormalized, []);
+        }
+        channelCategoryMap.get(ulusalNormalized).push(...digerChannels);
+        channelCategoryMap.delete('diğer');
+        
+        // Ulusal kategorisini güncelle
+        if (categoryMap.has(ulusalNormalized)) {
+            categoryMap.get(ulusalNormalized).count += digerChannels.length;
+        }
+    }
+    
+    // Kalan kategorileri ekle (sadece benzersiz olanlar)
+    for (const [normalized, catChannels] of channelCategoryMap.entries()) {
+        if (normalized === 'all' || normalized === 'tümü' || normalized === 'diğer') continue;
+        if (categoryMap.has(normalized)) continue; // Zaten eklenmiş
+        
+        // Kategori ismini düzelt
+        const originalCategory = catChannels[0]?.category || normalized;
+        const displayName = originalCategory.split(' ').map(w => 
+            w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+        ).join(' ');
+        
+        categoryMap.set(normalized, {
+            name: displayName,
+            icon: categoryIcons[normalized] || categoryIcons[normalizeCategory(originalCategory)] || '📺',
+            id: normalized,
+            count: catChannels.length,
+            isStandard: false
+        });
+    }
+    
+    return Array.from(categoryMap.values()).sort((a, b) => {
+        // Önce standart kategoriler, sonra diğerleri
+        if (a.isStandard && !b.isStandard) return -1;
+        if (!a.isStandard && b.isStandard) return 1;
+        // Sonra isme göre sırala
+        return a.name.localeCompare(b.name, 'tr');
+    });
 }
 
 // Dinamik kategori kartlarını oluştur (anasayfa ile aynı)
@@ -833,101 +1001,78 @@ function renderDynamicCategories() {
     const categoriesContainer = document.querySelector('.player-categories-container');
     if (!categoriesContainer) return;
     
-    // Mevcut kartları temizle (Tümü hariç)
-    const existingCards = categoriesContainer.querySelectorAll('.category-card:not([data-category="all"])');
-    existingCards.forEach(card => card.remove());
+    // TÜM kartları temizle (Tümü dahil - yeniden oluşturacağız)
+    categoriesContainer.innerHTML = '';
     
-    // Önce standart kategorileri göster (Tümü hariç - zaten HTML'de var)
-    const displayedCategories = new Set();
+    // Kategorileri birleştir ve normalize et
+    const mergedCategories = mergeAndNormalizeCategories();
     
-    STANDARD_CATEGORIES.forEach(cat => {
-        // "Tümü" kategorisini atla (HTML'de zaten var)
-        if (cat.id === 'all') {
-            return;
-        }
-        
-        // Kategoride kanal var mı kontrol et
-        const hasChannels = channels.some(ch => {
-            const chCategory = normalizeCategory(ch.category);
-            return chCategory === cat.id;
-        });
-        
-        // Eğer kanal varsa göster
-        if (hasChannels) {
-            displayedCategories.add(cat.id);
-            
-            const categoryCard = document.createElement('div');
-            categoryCard.className = 'category-card';
-            categoryCard.dataset.category = cat.id;
-            
-            const icon = document.createElement('div');
-            icon.className = 'category-icon';
-            icon.textContent = cat.icon;
-            
-            const name = document.createElement('div');
-            name.className = 'category-name';
-            name.textContent = cat.name;
-            
-            categoryCard.appendChild(icon);
-            categoryCard.appendChild(name);
-            
-            categoriesContainer.appendChild(categoryCard);
-        }
-    });
+    // "Tümü" kategorisini ekle
+    const allCard = document.createElement('div');
+    allCard.className = 'category-card';
+    allCard.dataset.category = 'all';
+    if (currentCategory === 'all') {
+        allCard.classList.add('active');
+    }
     
-    // Sonra M3U'da bulunan ama STANDARD_CATEGORIES'de olmayan kategorileri ekle
-    // Çiftlemeyi önlemek için Set kullan
-    const uniqueCategories = new Set();
+    const allIcon = document.createElement('div');
+    allIcon.className = 'category-icon';
+    allIcon.textContent = '📺';
     
-    allCategories.forEach(category => {
-        // Normalize et (büyük/küçük harf duyarsız)
-        const normalized = normalizeCategory(category);
-        
-        // Zaten gösterilmiş kategorileri atla
-        if (displayedCategories.has(normalized)) {
-            return;
+    const allName = document.createElement('div');
+    allName.className = 'category-name';
+    allName.textContent = 'Tümü';
+    
+    allCard.appendChild(allIcon);
+    allCard.appendChild(allName);
+    categoriesContainer.appendChild(allCard);
+    
+    // "Ulusal" kategorisini "Tümü"nün sağına ekle
+    const ulusalCat = mergedCategories.find(cat => cat.id.toLowerCase() === 'ulusal');
+    if (ulusalCat) {
+        const ulusalCard = document.createElement('div');
+        ulusalCard.className = 'category-card';
+        ulusalCard.dataset.category = ulusalCat.id;
+        if (currentCategory === ulusalCat.id) {
+            ulusalCard.classList.add('active');
         }
         
-        // "Tümü" kategorisini atla
-        if (normalized === 'all') {
-            return;
+        const ulusalIcon = document.createElement('div');
+        ulusalIcon.className = 'category-icon';
+        ulusalIcon.textContent = ulusalCat.icon;
+        
+        const ulusalName = document.createElement('div');
+        ulusalName.className = 'category-name';
+        ulusalName.textContent = ulusalCat.name;
+        
+        ulusalCard.appendChild(ulusalIcon);
+        ulusalCard.appendChild(ulusalName);
+        categoriesContainer.appendChild(ulusalCard);
+    }
+    
+    // Diğer kategorileri ekle (Ulusal ve Diğer hariç)
+    mergedCategories.forEach(cat => {
+        if (cat.id.toLowerCase() === 'ulusal') return; // Ulusal zaten eklendi
+        if (cat.id.toLowerCase() === 'diğer') return; // Diğer kategorisini gösterme
+        const categoryCard = document.createElement('div');
+        categoryCard.className = 'category-card';
+        categoryCard.dataset.category = cat.id;
+        if (currentCategory === cat.id) {
+            categoryCard.classList.add('active');
         }
         
-        // Çiftlemeyi önle
-        if (uniqueCategories.has(normalized)) {
-            return;
-        }
-        uniqueCategories.add(normalized);
+        const icon = document.createElement('div');
+        icon.className = 'category-icon';
+        icon.textContent = cat.icon;
         
-        // Kategoride kanal var mı kontrol et
-        const hasChannels = channels.some(ch => {
-            const chCategory = normalizeCategory(ch.category);
-            return chCategory === normalized;
-        });
+        const name = document.createElement('div');
+        name.className = 'category-name';
+        name.textContent = cat.name;
         
-        // Eğer kanal varsa göster
-        if (hasChannels) {
-            displayedCategories.add(normalized);
-            
-            const categoryCard = document.createElement('div');
-            categoryCard.className = 'category-card';
-            categoryCard.dataset.category = normalized;
-            
-            const icon = document.createElement('div');
-            icon.className = 'category-icon';
-            // Standart kategoride yoksa varsayılan ikon kullan
-            const standardCat = STANDARD_CATEGORIES.find(c => c.id === normalized);
-            icon.textContent = standardCat ? standardCat.icon : categoryIcons[normalized] || '📺';
-            
-            const name = document.createElement('div');
-            name.className = 'category-name';
-            name.textContent = standardCat ? standardCat.name : normalized;
-            
-            categoryCard.appendChild(icon);
-            categoryCard.appendChild(name);
-            
-            categoriesContainer.appendChild(categoryCard);
-        }
+        categoryCard.appendChild(icon);
+        categoryCard.appendChild(name);
+        
+        categoriesContainer.appendChild(categoryCard);
     });
     
     // Event listener'ları yeniden bağla
@@ -1014,8 +1159,12 @@ function renderSidebarChannels() {
             filteredChannels = channels;
         } else {
             filteredChannels = channels.filter(ch => {
-                const chCategory = normalizeCategory(ch.category);
-                return chCategory === currentCategory;
+                const chCategory = normalizeCategory(ch.category).toLowerCase();
+                const targetCategory = currentCategory.toLowerCase();
+                // Tam eşleşme veya içerme kontrolü (birleştirilmiş kategoriler için)
+                return chCategory === targetCategory || 
+                       chCategory.includes(targetCategory) || 
+                       targetCategory.includes(chCategory);
             });
         }
         
@@ -1217,7 +1366,8 @@ function renderCategorySidebar() {
 // Play Channel
 function playChannel(channel) {
     if (!channel || !channel.url) {
-        showError('Geçersiz kanal bilgisi.');
+        // Hata mesajı kaldırıldı - sessiz çalış
+        console.warn('Geçersiz kanal bilgisi');
         return;
     }
     
@@ -1290,7 +1440,8 @@ function playM3U8(url) {
     setupVideoControls();
     
     if (typeof Hls === 'undefined') {
-        showError('HLS.js yüklenemedi. Lütfen sayfayı yenileyin.');
+        // Hata mesajı kaldırıldı - sessiz çalış
+        console.warn('HLS.js yüklenemedi');
         loadingPlayer.classList.remove('active');
         return;
     }
@@ -1391,7 +1542,8 @@ function playM3U8(url) {
             
             videoPlayer.play().catch(err => {
                 console.error('Playback error:', err);
-                showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
+                // Hata mesajı kaldırıldı - sessiz çalış
+                console.warn('Video oynatılamadı');
             });
         });
         
@@ -1409,7 +1561,8 @@ function playM3U8(url) {
                             } catch (destroyErr) {
                                 console.warn('HLS destroy error:', destroyErr);
                             }
-                            showError('Ağ hatası. İnternet bağlantınızı kontrol edin.');
+                            // Hata mesajı kaldırıldı - sessiz çalış
+                console.warn('Ağ hatası');
                         }
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
@@ -1422,7 +1575,8 @@ function playM3U8(url) {
                             } catch (destroyErr) {
                                 console.warn('HLS destroy error:', destroyErr);
                             }
-                            showError('Video çözümlenemedi. Lütfen başka bir kanal deneyin.');
+                            // Hata mesajı kaldırıldı - sessiz çalış
+                            console.warn('Video çözümlenemedi');
                         }
                         break;
                     default:
@@ -1436,7 +1590,8 @@ function playM3U8(url) {
                         } catch (destroyErr) {
                             console.warn('HLS destroy error:', destroyErr);
                         }
-                        showError('Kanal yüklenemedi. Lütfen başka bir kanal deneyin.');
+                        // Hata mesajı kaldırıldı - sessiz çalış
+                        console.warn('Kanal yüklenemedi');
                         break;
                 }
             }
@@ -1450,7 +1605,8 @@ function playM3U8(url) {
                 } catch (destroyErr) {
                     console.warn('HLS destroy error:', destroyErr);
                 }
-                showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
+                // Hata mesajı kaldırıldı - sessiz çalış
+                console.warn('Kanal yükleme zaman aşımı');
             }
         }, 10000); // 10 saniye timeout (15'ten 10'a düşürüldü)
         
@@ -1484,14 +1640,16 @@ function playM3U8(url) {
             }).catch(err => {
                 console.error('Playback error:', err);
                 if (loadingPlayer) loadingPlayer.classList.remove('active');
-                showError('Video oynatılamadı. Lütfen başka bir kanal deneyin.');
+                // Hata mesajı kaldırıldı - sessiz çalış
+                console.warn('Video oynatılamadı');
             });
         }
         
         const safariTimeout = safeSetTimeout(() => {
             if (videoPlayer.readyState === 0) {
                 if (loadingPlayer) loadingPlayer.classList.remove('active');
-                showError('Kanal yükleme zaman aşımı. Lütfen başka bir kanal deneyin.');
+                // Hata mesajı kaldırıldı - sessiz çalış
+                console.warn('Kanal yükleme zaman aşımı');
             }
         }, 10000); // 10 saniye timeout (15'ten 10'a düşürüldü)
         
@@ -1505,7 +1663,8 @@ function playM3U8(url) {
         videoPlayer.addEventListener('loadeddata', loadedDataHandler, { once: true });
     } else {
         loadingPlayer.classList.remove('active');
-        showError('Tarayıcınız bu video formatını desteklemiyor.');
+        // Hata mesajı kaldırıldı - sessiz çalış
+        console.warn('Tarayıcı bu video formatını desteklemiyor');
     }
 }
 

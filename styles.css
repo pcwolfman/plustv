@@ -1593,82 +1593,220 @@ body {
 }
 
 .player-categories-section {
-    padding: 0.75rem 0.75rem 0.5rem 0.75rem;
+    padding: 1rem 1.5rem 0.75rem 1.5rem;
     background: var(--bg-dark);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
     flex-shrink: 0;
+    /* Optimize for responsive performance */
+    will-change: scroll-position;
+    contain: layout style;
 }
 
 .player-categories-container {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     overflow-x: auto;
     overflow-y: hidden;
     flex-wrap: nowrap;
     justify-content: flex-start;
-    padding-bottom: 0.25rem;
+    padding-bottom: 0.5rem;
     -webkit-overflow-scrolling: touch;
     width: max-content;
     min-width: 100%;
     scroll-behavior: smooth;
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: var(--primary) var(--bg-dark);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .player-categories-container::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
 }
 
 .player-categories-container::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 3px;
+    background: var(--bg-dark);
+    border-radius: 4px;
 }
 
 .player-categories-container::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
+    background: var(--primary);
+    border-radius: 4px;
     transition: background 0.3s ease;
 }
 
 .player-categories-container::-webkit-scrollbar-thumb:hover {
-    background: var(--primary);
+    background: var(--primary-dark);
 }
 
 /* Player Page Category Cards - Base Styles */
 .player-categories-section .category-card {
+    background: var(--bg-card);
+    border: 3px solid var(--border);
+    border-radius: 14px;
+    padding: 0.75rem 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    justify-content: center;
     flex-shrink: 0;
     white-space: nowrap;
-    cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
 }
 
+.player-categories-section .category-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    background: var(--bg-hover);
+    box-shadow: 0 8px 16px var(--shadow);
+}
+
+.player-categories-section .category-card.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    transform: translateY(-4px);
+}
+
+.player-categories-section .category-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0;
+    line-height: 1;
+}
+
+.player-categories-section .category-name {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+}
+
+.player-categories-section .category-card.active .category-name {
+    color: white;
+}
+
 /* Player Page Category Cards - Responsive */
-@media (max-width: 1024px) {
+/* Büyük Ekranlar (1024px+) */
+@media (min-width: 1024px) {
+    .player-categories-section {
+        padding: 1.25rem 2rem 1rem 2rem;
+    }
+
+    .player-categories-container {
+        gap: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .player-categories-section .category-card {
+        min-height: 90px;
+        min-width: 90px;
+        max-width: 90px;
+        padding: 0.875rem 1rem;
+    }
+
+    .player-categories-section .category-icon {
+        font-size: 2rem;
+    }
+
+    .player-categories-section .category-name {
+        font-size: 0.875rem;
+    }
+}
+
+/* Orta Ekranlar (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .player-categories-section {
+        padding: 1rem 1.25rem 0.75rem 1.25rem;
+    }
+
+    .player-categories-container {
+        gap: 0.75rem;
+        padding-bottom: 0.625rem;
+    }
+
+    .player-categories-section .category-card {
+        min-height: 75px;
+        min-width: 75px;
+        max-width: 75px;
+        padding: 0.75rem 0.875rem;
+    }
+
+    .player-categories-section .category-icon {
+        font-size: 1.625rem;
+    }
+
+    .player-categories-section .category-name {
+        font-size: 0.75rem;
+    }
+}
+
+/* Küçük Ekranlar (480px - 768px) */
+@media (min-width: 480px) and (max-width: 768px) {
+    .player-categories-section {
+        padding: 0.875rem 1rem 0.625rem 1rem;
+    }
+
+    .player-categories-container {
+        gap: 0.625rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .player-categories-section .category-card {
+        min-height: 70px;
+        min-width: 70px;
+        max-width: 70px;
+        padding: 0.625rem 0.75rem;
+    }
+
+    .player-categories-section .category-icon {
+        font-size: 1.5rem;
+    }
+
+    .player-categories-section .category-name {
+        font-size: 0.6875rem;
+    }
+}
+
+/* Çok Küçük Ekranlar (480px altı) */
+@media (max-width: 480px) {
+    .player-categories-section {
+        padding: 0.75rem 0.875rem 0.5rem 0.875rem;
+    }
+
     .player-categories-container {
         flex-wrap: nowrap;
-        gap: 0.25rem;
+        gap: 0.5rem;
         overflow-x: auto;
         justify-content: flex-start;
+        padding-bottom: 0.5rem;
     }
     
     .player-categories-section .category-card {
-        min-height: 48px;
-        min-width: 48px;
-        max-width: 48px;
-        padding: 0.375rem;
+        min-height: 65px;
+        min-width: 65px;
+        max-width: 65px;
+        padding: 0.5rem 0.625rem;
         flex-shrink: 0;
         white-space: nowrap;
     }
     
     .player-categories-section .category-icon {
-        font-size: 0.9375rem;
+        font-size: 1.375rem;
     }
     
     .player-categories-section .category-name {
-        font-size: 0.5625rem;
+        font-size: 0.625rem;
     }
 }
 
@@ -1724,7 +1862,12 @@ body {
     }
 }
 
+/* Çok Küçük Ekranlar (360px altı) */
 @media (max-width: 360px) {
+    .player-categories-section {
+        padding: 0.625rem 0.75rem 0.5rem 0.75rem;
+    }
+
     .player-categories-container {
         flex-wrap: nowrap;
         gap: 0.5rem;
@@ -1732,52 +1875,26 @@ body {
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
-        scrollbar-color: var(--border) transparent;
+        scrollbar-color: var(--primary) var(--bg-dark);
         justify-content: flex-start;
+        padding-bottom: 0.5rem;
     }
     
-    /* Kategorileri kutucuktan çıkar, sadece metin olarak göster */
     .player-categories-section .category-card {
-        background: transparent;
-        border: none;
-        border-radius: 0;
-        padding: 0.5rem 0.75rem;
-        min-height: auto;
-        min-width: auto;
-        max-width: none;
-        flex-direction: row;
-        gap: 0.5rem;
-        border-bottom: 2px solid transparent;
+        min-height: 60px;
+        min-width: 60px;
+        max-width: 60px;
+        padding: 0.5rem;
         flex-shrink: 0;
-    }
-    
-    .player-categories-section .category-card:hover {
-        transform: none;
-        background: transparent;
-        border-bottom-color: var(--primary);
-    }
-    
-    .player-categories-section .category-card.active {
-        background: transparent;
-        border-bottom-color: var(--primary);
-        box-shadow: none;
-        transform: none;
-    }
-    
-    .player-categories-section .category-icon {
-        font-size: 1rem;
-        margin-bottom: 0;
-    }
-    
-    .player-categories-section .category-name {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: var(--text-secondary);
         white-space: nowrap;
     }
     
-    .player-categories-section .category-card.active .category-name {
-        color: var(--primary);
+    .player-categories-section .category-icon {
+        font-size: 1.25rem;
+    }
+    
+    .player-categories-section .category-name {
+        font-size: 0.5625rem;
     }
 }
 

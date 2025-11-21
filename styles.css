@@ -107,31 +107,31 @@ body {
     position: relative;
 }
 
-/* Arama Header */
+/* Arama Header - Araç Multimedya Optimizasyonu */
 .search-header {
     position: sticky;
     top: 0;
     z-index: 100;
     background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem;
-    box-shadow: 0 4px 6px var(--shadow);
+    border-bottom: 2px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 12px var(--shadow-lg);
 }
 
 .search-container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .zoom-toggle-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     background: var(--bg-dark);
-    border: 2px solid var(--border);
+    border: 3px solid var(--border);
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
@@ -140,6 +140,8 @@ body {
     transition: all 0.3s ease;
     flex-shrink: 0;
     padding: 0;
+    min-width: 56px;
+    min-height: 56px;
 }
 
 .zoom-toggle-btn:hover {
@@ -153,8 +155,8 @@ body {
 }
 
 .zoom-toggle-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 .view-menu-container {
@@ -171,14 +173,16 @@ body {
 }
 
 .color-picker-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 2px solid var(--border);
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 3px solid var(--border);
     cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
     position: relative;
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .color-picker-btn:hover {
@@ -214,24 +218,25 @@ body {
 
 .search-icon {
     position: absolute;
-    left: 1rem;
+    left: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 .search-box input {
     width: 100%;
-    padding: 0.875rem 1rem 0.875rem 3rem;
+    padding: 1rem 1.25rem 1rem 3.5rem;
     background: var(--bg-dark);
-    border: 2px solid var(--border);
-    border-radius: 12px;
+    border: 3px solid var(--border);
+    border-radius: 14px;
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: 1.125rem;
     transition: all 0.3s ease;
     font-family: inherit;
+    min-height: 56px;
 }
 
 .search-box input:focus {
@@ -270,11 +275,11 @@ body {
     color: var(--text-primary);
 }
 
-/* Kategoriler Bölümü */
+/* Kategoriler Bölümü - Araç Multimedya Optimizasyonu */
 .categories-section {
-    padding: 0.75rem 1rem 0.5rem 1rem;
+    padding: 1rem 1.5rem 0.75rem 1.5rem;
     background: var(--bg-dark);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
     position: relative;
     overflow-x: auto;
     overflow-y: hidden;
@@ -284,7 +289,7 @@ body {
 }
 
 .categories-section::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
 }
 
 .categories-section::-webkit-scrollbar-track {
@@ -302,17 +307,19 @@ body {
 
 .view-menu-btn {
     background: var(--bg-card);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 0.75rem;
+    border: 3px solid var(--border);
+    border-radius: 14px;
+    padding: 0.875rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-primary);
     transition: all 0.3s ease;
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
 }
 
 .view-menu-btn:hover {
@@ -322,39 +329,40 @@ body {
 }
 
 .view-menu-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     stroke: currentColor;
+    stroke-width: 2.5;
 }
 
 
 .categories-container {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     overflow-x: visible;
     overflow-y: hidden;
     flex-wrap: nowrap;
     justify-content: flex-start;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.75rem;
     width: max-content;
     min-width: 100%;
 }
 
 .category-card {
     background: var(--bg-card);
-    border: 2px solid var(--border);
-    border-radius: 10px;
-    padding: 0.5rem 0.625rem;
+    border: 3px solid var(--border);
+    border-radius: 14px;
+    padding: 0.75rem 0.875rem;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
-    min-height: 60px;
-    min-width: 60px;
-    max-width: 60px;
+    gap: 0.375rem;
+    min-height: 80px;
+    min-width: 80px;
+    max-width: 80px;
     justify-content: center;
     flex-shrink: 0;
     white-space: nowrap;
@@ -375,27 +383,28 @@ body {
 }
 
 .category-icon {
-    font-size: 1.25rem;
+    font-size: 1.75rem;
     margin-bottom: 0;
     line-height: 1;
 }
 
 .category-name {
-    font-size: 0.6875rem;
-    font-weight: 600;
+    font-size: 0.8125rem;
+    font-weight: 700;
     color: var(--text-secondary);
     line-height: 1.2;
+    letter-spacing: 0.02em;
 }
 
 .category-card.active .category-name {
     color: white;
 }
 
-/* Kanallar Bölümü */
+/* Kanallar Bölümü - Araç Multimedya Optimizasyonu */
 .channels-section {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 0.75rem 1rem 2rem 1rem;
+    padding: 1.25rem 1.5rem 2.5rem 1.5rem;
 }
 
 .channels-header {
@@ -408,72 +417,76 @@ body {
 }
 
 .channels-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
+    letter-spacing: 0.02em;
 }
 
 .channel-count {
     background: var(--bg-card);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.875rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--text-secondary);
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
 }
 
 .channels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 0.625rem;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
     contain: layout style paint;
     will-change: contents;
 }
 
-/* Büyük Kart Görünümü */
+/* Büyük Kart Görünümü - Araç Multimedya Optimizasyonu */
 .channels-grid.view-large {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.25rem;
 }
 
 .channels-grid.view-large .channel-card {
-    min-height: 140px;
-    padding: 0.75rem;
+    min-height: 180px;
+    padding: 1rem;
 }
 
 .channels-grid.view-large .channel-logo,
 .channels-grid.view-large .channel-logo-placeholder {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
 }
 
 .channels-grid.view-large .channel-name {
-    font-size: 0.8125rem;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
-/* Küçük Kart Görünümü */
+/* Küçük Kart Görünümü - Araç Multimedya Optimizasyonu */
 .channels-grid.view-small {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.875rem;
 }
 
 .channels-grid.view-small .channel-card {
-    min-height: 95px;
-    padding: 0.5rem;
+    min-height: 130px;
+    padding: 0.75rem;
 }
 
 .channels-grid.view-small .channel-logo,
 .channels-grid.view-small .channel-logo-placeholder {
-    width: 40px;
-    height: 40px;
+    width: 56px;
+    height: 56px;
 }
 
 .channels-grid.view-small .channel-name {
-    font-size: 0.6875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
 }
 
 .channels-grid.view-small .channel-category {
-    font-size: 0.5625rem;
+    font-size: 0.75rem;
 }
 
 /* Liste Görünümü */
@@ -518,15 +531,15 @@ body {
 
 .channel-card {
     background: var(--bg-card);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 0.625rem;
+    border: 3px solid var(--border);
+    border-radius: 14px;
+    padding: 0.875rem;
     cursor: pointer;
     transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     text-align: center;
     position: relative;
     overflow: hidden;
-    min-height: 110px;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -560,10 +573,10 @@ body {
 }
 
 .channel-logo {
-    width: 52px;
-    height: 52px;
+    width: 68px;
+    height: 68px;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--bg-dark);
     will-change: opacity;
     transform: translateZ(0); /* GPU acceleration */
@@ -573,34 +586,36 @@ body {
 }
 
 .channel-logo-placeholder {
-    width: 52px;
-    height: 52px;
+    width: 68px;
+    height: 68px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     position: relative;
     z-index: 1;
 }
 
 .channel-name {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.9375rem;
+    font-weight: 700;
     color: var(--text-primary);
     position: relative;
     z-index: 1;
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.3;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: 0.01em;
 }
 
 .channel-category {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--text-muted);
     position: relative;
     z-index: 1;
@@ -1047,41 +1062,125 @@ body {
 }
 
 /* Responsive */
-/* 9-10 inç Yatay Araç Multimedya Ekranları için Optimizasyon */
+/* Araç Multimedya Ekranları için Optimizasyon - Büyük Ekranlar (1024px+) */
 @media (min-width: 1024px) and (max-width: 1920px) and (min-height: 600px) and (max-height: 1200px) and (orientation: landscape) {
+    .search-header {
+        padding: 1.5rem 2rem;
+    }
+
+    .search-container {
+        gap: 1.5rem;
+    }
+
+    .zoom-toggle-btn,
+    .view-menu-btn {
+        width: 64px;
+        height: 64px;
+        min-width: 64px;
+        min-height: 64px;
+    }
+
+    .zoom-toggle-btn svg,
+    .view-menu-btn svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .color-picker-btn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    .search-box input {
+        padding: 1.125rem 1.5rem 1.125rem 4rem;
+        font-size: 1.25rem;
+        min-height: 64px;
+    }
+
+    .search-icon {
+        width: 28px;
+        height: 28px;
+        left: 1.5rem;
+    }
+
+    .categories-section {
+        padding: 1.25rem 2rem 1rem 2rem;
+    }
+
+    .category-card {
+        min-height: 90px;
+        min-width: 90px;
+        max-width: 90px;
+        padding: 0.875rem 1rem;
+    }
+
+    .category-icon {
+        font-size: 2rem;
+    }
+
+    .category-name {
+        font-size: 0.875rem;
+    }
+
+    .channels-section {
+        padding: 1.5rem 2rem 3rem 2rem;
+    }
+
+    .channels-header h2 {
+        font-size: 2rem;
+    }
+
+    .channel-count {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.125rem;
+    }
+
     .channels-grid {
-        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-        gap: 0.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1.25rem;
     }
 
     .channels-grid.view-large {
-        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
-        gap: 0.625rem;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .channels-grid.view-large .channel-card {
+        min-height: 200px;
+        padding: 1.25rem;
+    }
+
+    .channels-grid.view-large .channel-logo,
+    .channels-grid.view-large .channel-logo-placeholder {
+        width: 90px;
+        height: 90px;
     }
 
     .channels-grid.view-small {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 0.375rem;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
     }
 
     .channel-card {
-        padding: 0.5rem;
-        min-height: 100px;
-        border-radius: 8px;
+        padding: 1rem;
+        min-height: 170px;
+        border-radius: 16px;
     }
 
     .channel-logo,
     .channel-logo-placeholder {
-        width: 46px;
-        height: 46px;
+        width: 75px;
+        height: 75px;
     }
 
     .channel-name {
-        font-size: 0.6875rem;
+        font-size: 1rem;
     }
 
     .channel-category {
-        font-size: 0.5625rem;
+        font-size: 0.8125rem;
     }
 
     .categories-container {
@@ -1097,27 +1196,148 @@ body {
     }
 }
 
+/* Orta Boy Araç Multimedya Ekranları (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .search-header {
+        padding: 1.125rem 1.25rem;
+    }
+
+    .zoom-toggle-btn,
+    .view-menu-btn {
+        width: 52px;
+        height: 52px;
+        min-width: 52px;
+        min-height: 52px;
+    }
+
+    .color-picker-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .search-box input {
+        padding: 0.9375rem 1.125rem 0.9375rem 3.25rem;
+        font-size: 1.0625rem;
+        min-height: 52px;
+    }
+
+    .category-card {
+        min-height: 75px;
+        min-width: 75px;
+        max-width: 75px;
+        padding: 0.75rem 0.875rem;
+    }
+
+    .category-icon {
+        font-size: 1.625rem;
+    }
+
+    .category-name {
+        font-size: 0.75rem;
+    }
+
+    .channels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .channel-card {
+        min-height: 150px;
+        padding: 0.875rem;
+    }
+
+    .channel-logo,
+    .channel-logo-placeholder {
+        width: 68px;
+        height: 68px;
+    }
+
+    .channel-name {
+        font-size: 0.9375rem;
+    }
+}
+
 /* Tablet and smaller */
 @media (max-width: 1024px) {
     .categories-container {
-        gap: 0.5rem;
+        gap: 0.625rem;
         flex-wrap: nowrap;
         justify-content: flex-start;
     }
 
     .category-card {
-        min-width: 55px;
-        max-width: 55px;
-        padding: 0.5rem 0.625rem;
-        min-height: 55px;
+        min-width: 70px;
+        max-width: 70px;
+        padding: 0.625rem 0.75rem;
+        min-height: 70px;
     }
 
     .category-icon {
-        font-size: 1.125rem;
+        font-size: 1.5rem;
     }
 
     .category-name {
-        font-size: 0.625rem;
+        font-size: 0.6875rem;
+    }
+}
+
+/* Küçük Araç Multimedya Ekranları (480px - 768px) */
+@media (max-width: 768px) and (min-width: 480px) {
+    .search-header {
+        padding: 1rem 1.125rem;
+    }
+
+    .zoom-toggle-btn,
+    .view-menu-btn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    .color-picker-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .search-box input {
+        padding: 0.875rem 1rem 0.875rem 3rem;
+        font-size: 1rem;
+        min-height: 48px;
+    }
+
+    .category-card {
+        min-height: 70px;
+        min-width: 70px;
+        max-width: 70px;
+    }
+
+    .category-icon {
+        font-size: 1.5rem;
+    }
+
+    .channels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.875rem;
+    }
+
+    .channel-card {
+        min-height: 140px;
+        padding: 0.75rem;
+    }
+
+    .channel-logo,
+    .channel-logo-placeholder {
+        width: 60px;
+        height: 60px;
+    }
+
+    .channel-name {
+        font-size: 0.875rem;
     }
 }
 
@@ -1127,15 +1347,17 @@ body {
         gap: 0.75rem;
     }
 
+    .zoom-toggle-btn,
     .view-menu-btn {
-        width: 40px;
-        height: 40px;
-        padding: 0.5rem;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
     }
 
     .view-menu-btn svg {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
     }
 
     .color-picker-container {
@@ -1143,8 +1365,10 @@ body {
     }
 
     .color-picker-btn {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
     }
 
     .search-box {

@@ -218,13 +218,28 @@ document.addEventListener('DOMContentLoaded', () => {
     detectTeslaScreen();
     
     // Listen for orientation changes
-    window.addEventListener('resize', detectTeslaScreen);
-    window.addEventListener('orientationchange', () => {
-        setTimeout(detectTeslaScreen, 100);
-    });
+    // Optimized resize handler with debounce
+    let resizeTimeout;
+    const handleResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            detectTeslaScreen();
+        }, 50); // Reduced from immediate to 50ms for better performance
+    };
+    
+    window.addEventListener('resize', handleResize, { passive: true });
+    
+    // Orientation change handler
+    const handleOrientationChange = () => {
+        clearTimeout(resizeTimeout);
+        // Immediate update for orientation changes
+        setTimeout(detectTeslaScreen, 50);
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
     
     if (screen.orientation) {
-        screen.orientation.addEventListener('change', detectTeslaScreen);
+        screen.orientation.addEventListener('change', handleOrientationChange);
     }
     
     // Get channel ID from URL
@@ -520,16 +535,21 @@ function setupResponsiveZoom() {
     
     // İlk yüklemede ve ekran boyutu değiştiğinde ayarla
     adjustZoomForScreen();
-    window.addEventListener('resize', () => {
-        // Debounce resize events
-        clearTimeout(window.zoomResizeTimeout);
-        window.zoomResizeTimeout = setTimeout(adjustZoomForScreen, 250);
-    });
+    
+    // Optimized resize handler
+    let zoomResizeTimeout;
+    const handleZoomResize = () => {
+        clearTimeout(zoomResizeTimeout);
+        zoomResizeTimeout = setTimeout(adjustZoomForScreen, 100); // Reduced from 250ms to 100ms
+    };
+    
+    window.addEventListener('resize', handleZoomResize, { passive: true });
     
     // Orientation change'de de ayarla
     window.addEventListener('orientationchange', () => {
-        setTimeout(adjustZoomForScreen, 100);
-    });
+        clearTimeout(zoomResizeTimeout);
+        setTimeout(adjustZoomForScreen, 50); // Reduced from 100ms to 50ms
+    }, { passive: true });
 }
 
 function setupZoomSync() {
